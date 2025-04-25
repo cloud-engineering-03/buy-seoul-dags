@@ -11,6 +11,8 @@ import numpy as np
 from sqlalchemy.engine import make_url
 import psycopg2
 from psycopg2.extras import execute_values
+from airflow.models import Variable
+
 
 
 
@@ -19,9 +21,7 @@ from psycopg2.extras import execute_values
 
 def fetch_raw_data(**context):
     # API 요청 + DataFrame 생성 + XCom push
-
-    load_dotenv()
-    api_key = os.getenv("SEOUL_API_KEY")
+    api_key = Variable.get("SEOUL_API_KEY")
     print(api_key)
     # 기본 설정 변수
     service_name = "tbLnOpendataRtmsV"  # API 서비스명 (거래 데이터)
