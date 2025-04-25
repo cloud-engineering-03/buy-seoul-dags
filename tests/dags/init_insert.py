@@ -4,7 +4,7 @@ import pandas as pd
 
 def insert_init_data():
     # DB 연결 설정
-    db_url = "postgresql+psycopg2://airflow:airflow@postgres:5432/airflow"
+    db_url = "postgresql+psycopg2://postgres:postgres@airflow-postgresql.airflow:5432/postgres"
     engine = create_engine(db_url)
 
     # 1. CREATE TABLE 쿼리 실행
