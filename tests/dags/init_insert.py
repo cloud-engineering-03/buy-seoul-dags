@@ -30,8 +30,8 @@ def insert_init_data():
 
     # 2. JSON 로드 및 INSERT
     curdir = os.getcwd()
-    gu_df = pd.read_json(curdir+"/자치구코드_군구명_매핑.json")
-    dist_df = pd.read_json(curdir+"/인접자치구_거리.json")
+    gu_df = pd.read_json(curdir+"/tests/dags/자치구코드_군구명_매핑.json")
+    dist_df = pd.read_json(curdir+"/tests/dags/인접자치구_거리.json")
     
     with engine.begin() as conn:
         for _, row in gu_df.iterrows():
