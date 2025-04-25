@@ -22,7 +22,7 @@ def fetch_raw_data(**context):
 
     load_dotenv()
     api_key = os.getenv("SEOUL_API_KEY")
-
+    print(api_key)
     # 기본 설정 변수
     service_name = "tbLnOpendataRtmsV"  # API 서비스명 (거래 데이터)
     base_url = "http://openapi.seoul.go.kr:8088"
@@ -44,6 +44,7 @@ def fetch_raw_data(**context):
 
     # 결과 처리
     if response.status_code == 200:
+        print(response)
         data = response.json()
         items = data.get(service_name, {}).get("row", [])
         df = pd.DataFrame(items)
