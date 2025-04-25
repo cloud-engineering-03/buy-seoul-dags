@@ -50,7 +50,7 @@ def fetch_raw_data(**context):
         print(df.head())
     else:
         print(f"요청 실패: {response.status_code}")
-
+    df.head()
 
     column_mapping = {"RTRCN_DAY":"취소일","LAND_AREA":"토지면적(㎡)","STDG_CD":"법정동코드","BLDG_NM":"건물명","STDG_NM":"법정동명","MNO":"본번","THING_AMT":"물건금액(만원)","LOTNO_SE_NM":"지번구분명","LOTNO_SE":"지번구분","CTRT_DAY":"계약일","RCPT_YR":"접수연도","OPBIZ_RESTAGNT_SGG_NM":"신고한 개업공인중개사 시군구명","ARCH_AREA":"건물면적(㎡)","CGG_CD":"자치구코드","RGHT_SE":"권리구분","SNO":"부번","FLR":"층","CGG_NM":"자치구명","BLDG_USG":"건물용도","ARCH_YR":"건축년도","DCLR_SE":"신고구분"}
 
