@@ -28,8 +28,8 @@ def insert_init_data():
         """))
 
     # 2. JSON 로드 및 INSERT
-    gu_df = pd.read_json("/opt/airflow/dags/자치구코드_군구명_매핑.json")
-    dist_df = pd.read_json("/opt/airflow/dags/인접자치구_거리.json")
+    gu_df = pd.read_json("/tests/dags/자치구코드_군구명_매핑.json")
+    dist_df = pd.read_json("/tests/dags/인접자치구_거리.json")
     
     with engine.begin() as conn:
         for _, row in gu_df.iterrows():
