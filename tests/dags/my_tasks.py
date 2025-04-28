@@ -70,17 +70,25 @@ def insert_data(**context):
     df = pd.read_json(raw_json)
 
     # 전처리
+    # 빈 문자열, 공백, 'null' 문자열을 None으로 변환
+    df["계약일"] = df["계약일"].replace(['', ' ', 'null', 'N/A'], None)
+    df["취소일"] = df["취소일"].replace(['', ' ', 'null', 'N/A'], None)
+
+    # 그 다음 정상 데이터만 to_datetime
+    df["계약일"] = df["계약일"].apply(
+        lambda x: pd.to_datetime(x, format="%Y%m%d", errors="coerce") if x is not None else None
+    )
+    df["취소일"] = df["취소일"].apply(
+        lambda x: pd.to_datetime(x, format="%Y%m%d", errors="coerce") if x is not None else None
+    )
     df = df.drop(columns=["자치구명", "법정동명"], errors="ignore")
-    df["계약일"] = pd.to_datetime(df["계약일"], format="%Y%m%d", errors="coerce")
-    df["취소일"] = pd.to_datetime(df["취소일"], format="%Y%m%d", errors="coerce")
     for col in ["계약일", "취소일"]:
         df[col] = df[col].apply(lambda x: None if pd.isna(x) else x)
 
     df["층"] = df["층"].replace(['', ' ', 'null', 'N/A'], np.nan).astype("Int64")
 
     # NaT → None 변환
-    df["계약일"] = df["계약일"].where(pd.notnull(df["계약일"]), None)
-    df["취소일"] = df["취소일"].where(pd.notnull(df["취소일"]), None)
+
 
     # 전역 None/결측 처리
     df = df.replace(['', ' ', 'null', 'N/A'], None)
@@ -161,7 +169,7 @@ def insert_data(**context):
 
 def prune_old_data():
     # 3일 초과된 데이터 delete
-    db_url = "postgresql+psycopg2://airflow:airflow@postgres:5432/airflow"
+    db_url = "postgresql+psycopg2://postgres:postgres@airflow-postgresql.airflow:5432/postgres"
     engine = create_engine(db_url)
 
     cutoff = (datetime.today() - timedelta(days=3)).strftime("%Y%m%d")
@@ -173,7 +181,7 @@ def prune_old_data():
         """), {"cutoff": cutoff})
 
 def t5_check_table():
-    db_url = "postgresql+psycopg2://airflow:airflow@postgres:5432/airflow"
+    db_url = "postgresql+psycopg2://postgres:postgres@airflow-postgresql.airflow:5432/postgres"
     engine = create_engine(db_url)
 
     with engine.connect() as conn:
