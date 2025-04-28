@@ -30,7 +30,7 @@ def table_exist():
         port=url.port
     )
     cur = conn.cursor()
-    sql = """CREATE TABLE IF NOT EXISTS public.ESTATE_DATA (
+    sql = """CREATE TABLE IF NOT EXISTS public.ESTATE_DATA2 (
 	id int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
 	자치구코드 varchar(5) NULL,
 	법정동코드 varchar(10) NULL,
@@ -51,7 +51,7 @@ def table_exist():
 	권리구분 varchar(10) NULL,
 	접수연도 int4 NULL,
 	"신고한 개업공인중개사 시군구명" varchar(40) NULL,
-	CONSTRAINT ESTATE_DATA_pkey PRIMARY KEY (id)
+	CONSTRAINT ESTATE_DATA2_pkey PRIMARY KEY (id)
 );"""
     cur.execute(sql)
     conn.commit()
@@ -147,7 +147,7 @@ def t5_check_table():
     engine = create_engine(db_url)
 
     with engine.connect() as conn:
-        df = pd.read_sql("SELECT * FROM public.ESTATE_DATA", conn)
+        df = pd.read_sql("SELECT * FROM public.ESTATE_DATA2", conn)
         print(df.to_string(index=False))
         
 def bulk_insert_data(df, table_name, conn, chunk_size=100):
