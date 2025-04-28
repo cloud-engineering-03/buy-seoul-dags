@@ -82,8 +82,8 @@ def insert_data(**context):
     df['취소일'].replace({pd.NaT: None})
 
     # 전역 None/결측 처리
-    df = df.replace(['', ' ', 'null', 'N/A'], None)
-    df = df.where(pd.notnull(df), None)
+    df = df.replace([pd.NaT,'', ' ', 'null', 'N/A'], None)
+    # df = df.where(pd.notnull(df), None)
 
     # DB 접속 정보
     db_url = "postgresql+psycopg2://postgres:postgres@airflow-postgresql.airflow:5432/postgres"
@@ -112,7 +112,10 @@ def insert_data(**context):
     fail_count = 0
 
     for i, row in df.iterrows():
-        values = [row.get(col, None) for col in columns]
+        values = [
+        None if pd.isna(row.get(col, None)) else row.get(col, None)
+        for col in columns
+    ]
         print(values)
         try:
             cur.execute(insert_sql, values)
