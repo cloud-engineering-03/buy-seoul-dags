@@ -51,7 +51,7 @@ def table_exist():
 	권리구분 varchar(10) NULL,
 	접수연도 int4 NOT NULL,
 	"신고한 개업공인중개사 시군구명" varchar(40) NULL,
-	CONSTRAINT 부동산데이_pkey PRIMARY KEY (id)
+	CONSTRAINT ESTATE_DATA_pkey PRIMARY KEY (id)
 );"""
     cur.execute(sql)
     conn.commit()
