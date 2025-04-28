@@ -121,7 +121,7 @@ def insert_data(**context):
 
         print(values)
         try:
-            cur.execute(insert_sql, values)
+            conn.execute(insert_sql, values)
             success_count += 1
             print(f"[✅ row {i}] 삽입 성공")
         except Exception as e:
