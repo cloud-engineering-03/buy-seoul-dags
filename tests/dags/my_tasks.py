@@ -49,7 +49,7 @@ def table_exist():
 	건축년도 int4 NULL,
 	신고구분 varchar(10) NULL,
 	권리구분 varchar(10) NULL,
-	접수연도 int4 NOT NULL,
+	접수연도 int4 NULL,
 	"신고한 개업공인중개사 시군구명" varchar(40) NULL,
 	CONSTRAINT ESTATE_DATA_pkey PRIMARY KEY (id)
 );"""
