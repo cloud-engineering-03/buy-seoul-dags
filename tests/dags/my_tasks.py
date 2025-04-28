@@ -161,7 +161,7 @@ def bulk_insert_data(df, table_name, conn, chunk_size=100):
                 print(f"[❌ {idx+1}개] 삽입 실패: {e}")
                 fail_count += len(buffer)
             buffer = []
-        print(sql)
+        # print(sql)
     # 남은 row 처리
     if buffer:
         try:
