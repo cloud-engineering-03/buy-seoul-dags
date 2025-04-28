@@ -107,29 +107,33 @@ def insert_data(**context):
 
     success_count = 0
     fail_count = 0
+    bulk_insert_data(df, "부동산데이터", conn, chunk_size=100)
 
-    for i, row in df.iterrows():
-        values = [
-        None if pd.isna(row.get(col, None)) else row.get(col, None)
-        for col in columns
-    ]
-        sql_to_print = cur.mogrify(insert_sql, values).decode('utf-8')
-        print(f"[SQL Preview] {sql_to_print}")
+    # for i, row in df.iterrows():
+    #     values = [
+    #     None if pd.isna(row.get(col, None)) else row.get(col, None)
+    #     for col in columns
+    # ]
+    #     sql_to_print = cur.mogrify(insert_sql, values).decode('utf-8')
+    #     print(f"[SQL Preview] {sql_to_print}")
 
-        print(values)
-        try:
-            cur.execute(insert_sql, values)
-            success_count += 1
-            print(f"[✅ row {i}] 삽입 성공")
-        except Exception as e:
-            conn.rollback()
-            fail_count += 1
-            print(f"[❌ row {i}] 삽입 실패: {e}")
+    #     print(values)
+    #     try:
+    #         cur.execute(insert_sql, values)
+    #         success_count += 1
+    #         print(f"[✅ row {i}] 삽입 성공")
+    #     except Exception as e:
+    #         conn.rollback()
+    #         fail_count += 1
+    #         print(f"[❌ row {i}] 삽입 실패: {e}")
 
-    conn.commit()
-    cur.close()
-    conn.close()
-    print(f"[결과 요약] 성공: {success_count}, 실패: {fail_count}, 전체: {len(df)}")
+    # conn.commit()
+    # cur.close()
+    # conn.close()
+    # print(f"[결과 요약] 성공: {success_count}, 실패: {fail_count}, 전체: {len(df)}")
+
+
+
     # # XCom에서 JSON 불러오기
     # ti = context["ti"]
     # raw_json = context['ti'].xcom_pull(task_ids='fetch_raw_data', key='raw_df')
@@ -182,3 +186,62 @@ def t5_check_table():
         df = pd.read_sql("SELECT * FROM 부동산데이터", conn)
         print("DB 미리보기:")
         print(df.to_string(index=False))
+def bulk_insert_data(df, table_name, conn, chunk_size=100):
+    cur = conn.cursor()
+
+    columns = list(df.columns)
+    quoted_columns = [f'"{col}"' for col in columns]
+
+    insert_prefix = f"INSERT INTO {table_name} ({', '.join(quoted_columns)}) VALUES "
+
+    success_count = 0
+    fail_count = 0
+    buffer = []
+
+    for idx, row in df.iterrows():
+        values = []
+        for col in columns:
+            val = row.get(col, None)
+            if pd.isna(val):
+                values.append('NULL')
+            elif isinstance(val, str):
+                val = val.replace("'", "''")
+                values.append(f"'{val}'")
+            elif isinstance(val, pd.Timestamp):
+                values.append(f"'{val.strftime('%Y-%m-%d %H:%M:%S')}'")
+            else:
+                values.append(str(val))
+
+        buffer.append(f"({', '.join(values)})")
+
+        # chunk_size마다 insert
+        if (idx + 1) % chunk_size == 0:
+            try:
+                sql = insert_prefix + ",\n".join(buffer) + ";"
+                cur.execute(sql)
+                conn.commit()
+                print(f"[✅ {idx+1}개] 삽입 성공")
+                success_count += len(buffer)
+            except Exception as e:
+                conn.rollback()
+                print(f"[❌ {idx+1}개] 삽입 실패: {e}")
+                fail_count += len(buffer)
+            buffer = []
+
+    # 남은 row 처리
+    if buffer:
+        try:
+            sql = insert_prefix + ",\n".join(buffer) + ";"
+            cur.execute(sql)
+            conn.commit()
+            print(f"[✅ 남은 {len(buffer)}개] 삽입 성공")
+            success_count += len(buffer)
+        except Exception as e:
+            conn.rollback()
+            print(f"[❌ 남은 {len(buffer)}개] 삽입 실패: {e}")
+            fail_count += len(buffer)
+
+    cur.close()
+    conn.close()
+
+    print(f"총 성공: {success_count} / 실패: {fail_count}")
