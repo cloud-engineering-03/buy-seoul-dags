@@ -218,6 +218,7 @@ def bulk_insert_data(df, table_name, conn, chunk_size=100):
         if (idx + 1) % chunk_size == 0:
             try:
                 sql = insert_prefix + ",\n".join(buffer) + ";"
+                print(sql)
                 cur.execute(sql)
                 conn.commit()
                 print(f"[✅ {idx+1}개] 삽입 성공")
