@@ -14,10 +14,47 @@ from psycopg2.extras import execute_values
 from airflow.models import Variable
 
 
+db_url = "postgresql+psycopg2://postgres:postgres@airflow-postgresql.airflow:5432/postgres"
 
 
 
 
+def table_exist():
+    
+    url = make_url(db_url)
+    conn = psycopg2.connect(
+        dbname=url.database,
+        user=url.username,
+        password=url.password,
+        host=url.host,
+        port=url.port
+    )
+    cur = conn.cursor()
+    sql = """CREATE TABLE IF NOT EXISTS public.ESTATE_DATA (
+	id int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	자치구코드 varchar(5) NULL,
+	법정동코드 varchar(10) NULL,
+	계약일 date NULL,
+	취소일 date NULL,
+	지번구분 int4 NULL,
+	지번구분명 varchar(10) NULL,
+	본번 varchar(4) NULL,
+	부번 varchar(4) NULL,
+	건물명 varchar NULL,
+	층 int4 NULL,
+	"건물면적(㎡)" float8 NULL,
+	"토지면적(㎡)" float8 NULL,
+	"물건금액(만원)" float8 NULL,
+	건물용도 varchar NULL,
+	건축년도 int4 NULL,
+	신고구분 varchar(10) NULL,
+	권리구분 varchar(10) NULL,
+	접수연도 int4 NOT NULL,
+	"신고한 개업공인중개사 시군구명" varchar(40) NULL,
+	CONSTRAINT 부동산데이_pkey PRIMARY KEY (id)
+);"""
+    cur.execute(sql)
+    conn.commit()
 
 def fetch_raw_data(**context):
     # API 요청 + DataFrame 생성 + XCom push
@@ -26,8 +63,8 @@ def fetch_raw_data(**context):
     # 기본 설정 변수
     service_name = "tbLnOpendataRtmsV"  # API 서비스명 (거래 데이터)
     base_url = "http://openapi.seoul.go.kr:8088"
-    start_index = 30
-    end_index = 50
+    start_index = 1
+    end_index = 30
 
     # 오늘 날짜 기준 (예: 20250411 → 202504 형식)
     today = datetime.today()
@@ -93,7 +130,7 @@ def insert_data(**context):
         port=url.port
     )
 
-    bulk_insert_data(df, "부동산데이터", conn, chunk_size=100)
+    bulk_insert_data(df, "ESTATE_DATA", conn, chunk_size=100)
 
 def prune_old_data():
     db_url = "postgresql+psycopg2://postgres:postgres@airflow-postgresql.airflow:5432/postgres"
@@ -147,12 +184,7 @@ def bulk_insert_data(df, table_name, conn, chunk_size=100):
         if (idx + 1) % chunk_size == 0:
             try:
                 sql = insert_prefix + ",\n".join(buffer) + ";"
-
-                print(sql)
-                
                 cur.execute(sql)
-                print(cur.fetchall())
-
                 conn.commit()
                 print(f"[✅ {idx+1}개] 삽입 성공")
                 success_count += len(buffer)
@@ -165,11 +197,8 @@ def bulk_insert_data(df, table_name, conn, chunk_size=100):
     # 남은 row 처리
     if buffer:
         try:
-            sql = insert_prefix + ",\n".join(buffer) + ";"
-            print(sql)
-            
+            sql = insert_prefix + ",\n".join(buffer) + ";"            
             cur.execute(sql)
-            print(cur.fetchall())            
             conn.commit()
             print(f"[✅ 남은 {len(buffer)}개] 삽입 성공")
             success_count += len(buffer)
