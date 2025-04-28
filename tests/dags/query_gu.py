@@ -6,20 +6,20 @@ def query_gu_table():
     engine = create_engine(db_url)
 
     with engine.begin() as conn:
-        result = conn.execute(text("SELECT * FROM 자치구코드_군구명 ORDER BY 자치구코드 LIMIT 5"))
+        result = conn.execute(text("SELECT * FROM CGG_NM ORDER BY 자치구코드 LIMIT 5"))
         rows = result.fetchall()
-        print("=== 자치구코드_군구명 테이블 일부 ===")
+        print("=== CGG_NM 테이블 일부 ===")
         for row in rows:
             print(row)
 
-        result = conn.execute(text("SELECT * FROM 인접자치구_거리 ORDER BY 기준자치구코드 LIMIT 5"))
+        result = conn.execute(text("SELECT * FROM NEAR_CGG_NAME ORDER BY 기준자치구코드 LIMIT 5"))
         rows = result.fetchall()
-        print("=== 인접자치구_거리 테이블 일부 ===")
+        print("=== NEAR_CGG_NAME 테이블 일부 ===")
         for row in rows:
             print(row)
 
-        result = conn.execute(text("SELECT * FROM 부동산데이터 LIMIT 5"))
+        result = conn.execute(text("SELECT * FROM ESTATE_DATA LIMIT 5"))
         rows = result.fetchall()
-        print("=== 부동산데이터 테이블 일부 ===")
+        print("=== ESTATE_DATA 테이블 일부 ===")
         for row in rows:
             print(row)
