@@ -30,7 +30,7 @@ def table_exist():
         port=url.port
     )
     cur = conn.cursor()
-    sql = """CREATE TABLE IF NOT EXISTS testdb.ESTATE_DATA (
+    sql = """CREATE TABLE IF NOT EXISTS public.ESTATE_DATA (
 	id int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
 	자치구코드 varchar(5) NULL,
 	법정동코드 varchar(10) NULL,
