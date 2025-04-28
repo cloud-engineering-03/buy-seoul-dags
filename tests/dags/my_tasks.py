@@ -71,15 +71,12 @@ def insert_data(**context):
 
     # 전처리
     # 빈 문자열, 공백, 'null' 문자열을 None으로 변환
-    df["계약일"] = pd.to_datetime(df["계약일"], format="%Y%m%d", errors="coerce")
-    df["취소일"] = pd.to_datetime(df["취소일"], format="%Y%m%d", errors="coerce")
-    df = df.drop(columns=["자치구명", "법정동명"], errors="ignore")
-
-    df["층"] = df["층"].replace(['', ' ', 'null', 'N/A'], np.nan).astype("Int64")
-
-    # NaT → None 변환
-    df['계약일'].replace({pd.NaT: None})
-    df['취소일'].replace({pd.NaT: None})
+    df = df.drop(columns=["자치구명"], errors="ignore")
+    df = df.drop(columns=["법정동명"], errors="ignore")
+    for col in ["계약일", "취소일"]:
+        df[col] = df[col].replace(['', ' ', 'null', 'N/A'], None)
+        df[col] = df[col].apply(lambda x: pd.to_datetime(x, format='%Y%m%d', errors='coerce') if x is not None else None)
+        df[col] = df[col].apply(lambda x: None if pd.isna(x) else x)
 
     # 전역 None/결측 처리
     df = df.replace([pd.NaT,'', ' ', 'null', 'N/A'], None)
@@ -121,7 +118,7 @@ def insert_data(**context):
 
         print(values)
         try:
-            conn.execute(insert_sql, values)
+            cur.execute(insert_sql, values)
             success_count += 1
             print(f"[✅ row {i}] 삽입 성공")
         except Exception as e:
