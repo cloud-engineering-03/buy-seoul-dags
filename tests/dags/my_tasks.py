@@ -116,6 +116,9 @@ def insert_data(**context):
         None if pd.isna(row.get(col, None)) else row.get(col, None)
         for col in columns
     ]
+        sql_to_print = cur.mogrify(insert_sql, values).decode('utf-8')
+        print(f"[SQL Preview] {sql_to_print}")
+
         print(values)
         try:
             cur.execute(insert_sql, values)
