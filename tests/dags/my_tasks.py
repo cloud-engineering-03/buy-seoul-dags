@@ -147,7 +147,7 @@ def t5_check_table():
     engine = create_engine(db_url)
 
     with engine.connect() as conn:
-        df = pd.read_sql("SELECT * FROM publuc.ESTATE_DATA", conn)
+        df = pd.read_sql("SELECT * FROM public.ESTATE_DATA", conn)
         print(df.to_string(index=False))
         
 def bulk_insert_data(df, table_name, conn, chunk_size=100):
