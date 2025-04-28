@@ -26,8 +26,8 @@ def fetch_raw_data(**context):
     # 기본 설정 변수
     service_name = "tbLnOpendataRtmsV"  # API 서비스명 (거래 데이터)
     base_url = "http://openapi.seoul.go.kr:8088"
-    start_index = 1
-    end_index = 17
+    start_index = 30
+    end_index = 50
 
     # 오늘 날짜 기준 (예: 20250411 → 202504 형식)
     today = datetime.today()
