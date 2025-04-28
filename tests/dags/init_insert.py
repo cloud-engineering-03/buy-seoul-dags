@@ -11,14 +11,14 @@ def insert_init_data():
     # 1. CREATE TABLE 쿼리 실행
     with engine.begin() as conn:
         conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS CGG_NM (
+            CREATE TABLE IF NOT EXISTS public.CGG_NM (
                 자치구코드 CHAR(5) PRIMARY KEY,
                 군구명 VARCHAR(20)
             );
         """))
 
         conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS NEAR_CGG_NAME (
+            CREATE TABLE IF NOT EXISTS public.NEAR_CGG_NAME (
                 기준자치구코드 CHAR(5),
                 인접자치구코드 CHAR(5),
                 거리_km FLOAT,
