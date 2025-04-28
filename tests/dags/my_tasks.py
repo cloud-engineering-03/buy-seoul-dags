@@ -166,7 +166,10 @@ def bulk_insert_data(df, table_name, conn, chunk_size=100):
     if buffer:
         try:
             sql = insert_prefix + ",\n".join(buffer) + ";"
+            print(sql)
+            
             cur.execute(sql)
+            print(cur.fetchall())            
             conn.commit()
             print(f"[✅ 남은 {len(buffer)}개] 삽입 성공")
             success_count += len(buffer)
