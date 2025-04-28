@@ -2,7 +2,7 @@
 from sqlalchemy import create_engine, text
 
 def query_gu_table():
-    db_url = "postgresql+psycopg2://postgres:postgres@airflow-postgresql.airflow:5432/postgres"
+    db_url = "postgresql+psycopg2://test:test@postgres-postgresql.postgres.svc.cluster.local:5432/testdb"
     engine = create_engine(db_url)
 
     with engine.begin() as conn:

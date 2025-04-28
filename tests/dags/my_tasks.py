@@ -14,7 +14,7 @@ from psycopg2.extras import execute_values
 from airflow.models import Variable
 
 
-db_url = "postgresql+psycopg2://postgres:postgres@airflow-postgresql.airflow:5432/postgres"
+db_url = "postgresql+psycopg2://test:test@postgres-postgresql.postgres.svc.cluster.local:5432/testdb"
 
 
 
@@ -30,7 +30,7 @@ def table_exist():
         port=url.port
     )
     cur = conn.cursor()
-    sql = """CREATE TABLE IF NOT EXISTS public.ESTATE_DATA (
+    sql = """CREATE TABLE IF NOT EXISTS testdb.ESTATE_DATA (
 	id int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
 	자치구코드 varchar(5) NULL,
 	법정동코드 varchar(10) NULL,
@@ -120,7 +120,7 @@ def insert_data(**context):
     print(df.head(10))
 
     # DB 접속 정보
-    db_url = "postgresql+psycopg2://postgres:postgres@airflow-postgresql.airflow:5432/postgres"
+
     url = make_url(db_url)
     conn = psycopg2.connect(
         dbname=url.database,
@@ -133,23 +133,21 @@ def insert_data(**context):
     bulk_insert_data(df, "ESTATE_DATA", conn, chunk_size=100)
 
 def prune_old_data():
-    db_url = "postgresql+psycopg2://postgres:postgres@airflow-postgresql.airflow:5432/postgres"
     engine = create_engine(db_url)
 
     cutoff = (datetime.today() - timedelta(days=3)).strftime("%Y%m%d")
 
     with engine.connect() as conn:
         conn.execute(text("""
-            DELETE FROM 부동산데이터
+            DELETE FROM ESTATE_DATA
             WHERE "계약일" < :cutoff
         """), {"cutoff": cutoff})
 
 def t5_check_table():
-    db_url = "postgresql+psycopg2://postgres:postgres@airflow-postgresql.airflow:5432/postgres"
     engine = create_engine(db_url)
 
     with engine.connect() as conn:
-        df = pd.read_sql("SELECT * FROM 부동산데이터", conn)
+        df = pd.read_sql("SELECT * FROM ESTATE_DATA", conn)
         print(df.to_string(index=False))
         
 def bulk_insert_data(df, table_name, conn, chunk_size=100):
