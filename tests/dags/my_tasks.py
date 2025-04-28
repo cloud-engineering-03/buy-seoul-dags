@@ -87,7 +87,7 @@ def insert_data(**context):
     df = df.where(pd.notnull(df), None)
 
     # DB 접속 정보
-    db_url = "postgresql+psycopg2://airflow:airflow@postgres:5432/airflow"
+    db_url = "postgresql+psycopg2://postgres:postgres@airflow-postgresql.airflow:5432/postgres"
     url = make_url(db_url)
     conn = psycopg2.connect(
         dbname=url.database,
