@@ -84,10 +84,10 @@ def insert_init_data():
             )
 
         
-        for _, row in cgg_station_map_df.iterrows():
+        # for _, row in cgg_station_map_df.iterrows():
             
-            conn.execute(
-                text("INSERT INTO SUBWAY_CGG_MAPPING (역명, 자치구코드) VALUES (:station_name, :cgg_name)"),
-                {"station_name": row["역명"], "cgg_name": row["자치구코드"]}
-            )
+        #     conn.execute(
+        #         text("INSERT INTO SUBWAY_CGG_MAPPING (역명, 자치구코드) VALUES (:station_name, :cgg_name)"),
+        #         {"station_name": row["역명"], "cgg_name": row["자치구코드"]}
+        #     )
 
