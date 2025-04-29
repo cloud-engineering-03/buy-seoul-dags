@@ -29,7 +29,7 @@ def insert_init_data():
         """))
 
         conn.execute(text("""
-            REATE TABLE IF NOT EXISTS public.SUBWAY_CGG_MAPPING (
+            CREATE TABLE IF NOT EXISTS public.SUBWAY_CGG_MAPPING (
                 역명 VARCHAR(50) PRIMARY KEY,
                 자치구명 VARCHAR(20) NOT NULL
             );
