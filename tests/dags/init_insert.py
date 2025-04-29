@@ -53,9 +53,11 @@ def insert_init_data():
     
     # gu_df = pd.read_json(curdir"/자치구코드_군구명_매핑.json")
     gu_df = pd.read_json(os.path.join(curdir,"자치구코드_군구명_매핑_서울경기인천.json"))
+    gu_df["자치구코드"] = gu_df["자치구코드"].astype(str).str.zfill(5)
     sido_df = pd.read_json(os.path.join(curdir,"sido_code.json"))
     dist_df = pd.read_json(os.path.join(curdir,"인접자치구_거리.json"))
     cgg_station_map_df = pd.read_csv(os.path.join(curdir,"서울지하철_역위치_자치구매핑완료_서울경기인천.csv"))
+    cgg_station_map_df["자치구코드"] = cgg_station_map_df["자치구코드"].astype(str).str.zfill(5)
     
     with engine.begin() as conn:
         
