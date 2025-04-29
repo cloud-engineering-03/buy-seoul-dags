@@ -53,11 +53,11 @@ def insert_init_data():
     
     # gu_df = pd.read_json(curdir"/자치구코드_군구명_매핑.json")
     gu_df = pd.read_json(os.path.join(curdir,"자치구코드_군구명_매핑_서울경기인천.json"))
-    gu_df["자치구코드"] = gu_df["자치구코드"].astype(str).str.zfill(5)
+
     sido_df = pd.read_json(os.path.join(curdir,"sido_code.json"))
     dist_df = pd.read_json(os.path.join(curdir,"인접자치구_거리.json"))
     cgg_station_map_df = pd.read_csv(os.path.join(curdir,"서울지하철_역위치_자치구매핑완료_서울경기인천.csv"))
-    cgg_station_map_df["자치구코드"] = cgg_station_map_df["자치구코드"].astype(str).str.zfill(5)
+
     
     with engine.begin() as conn:
         
@@ -73,10 +73,11 @@ def insert_init_data():
                 text("INSERT INTO SIDO_NAME (시도코드, 시도명) VALUES (:sido_code, :sido_name)"),
                 {"sido_code": row["시도코드"], "sido_name": row["시도명"]}
             )
-
+        print(len(dist_df))
         for _, row in dist_df.iterrows():
             row["기준자치구코드"] = str(int(row["기준자치구코드"])).zfill(5)
             row["인접자치구코드"] = str(int(row["인접자치구코드"])).zfill(5)
+            row["거리_km"] = float(row["거리_km"])
             conn.execute(
                 text("INSERT INTO NEAR_CGG_NAME (기준자치구코드, 인접자치구코드, 거리_km) VALUES (:from_, :to_, :dist)"),
                 {"from_": row["기준자치구코드"], "to_": row["인접자치구코드"], "dist": row["거리_km"]}
