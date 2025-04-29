@@ -58,18 +58,18 @@ def insert_init_data():
     cgg_station_map_df = pd.read_csv(os.path.join(curdir,"서울지하철_역위치_자치구매핑완료.csv"))
     
     with engine.begin() as conn:
-        for _, row in cgg_station_map_df.iterrows():
-            
-            conn.execute(
-                text("INSERT INTO SUBWAY_CGG_MAPPING (역명, 자치구명) VALUES (:station_name, :cgg_name)"),
-                {"station_name": row["역명"], "cgg_name": row["자치구명"]}
-            )
-
+        
         for _, row in gu_df.iterrows():
             
             conn.execute(
                 text("INSERT INTO CGG_NM (자치구코드, 군구명) VALUES (:code, :name)"),
                 {"code": row["자치구코드"], "name": row["군구명"]}
+            )
+        for _, row in sido_df.iterrows():
+            row["시도코드"] = str(int(row["시도코드"])).zfill(2)
+            conn.execute(
+                text("INSERT INTO SIDO_NAME (시도코드, 시도명) VALUES (:sido_code, :sido_name)"),
+                {"sido_code": row["시도코드"], "sido_name": row["시도명"]}
             )
 
         for _, row in dist_df.iterrows():
@@ -80,9 +80,11 @@ def insert_init_data():
                 {"from_": row["기준자치구코드"], "to_": row["인접자치구코드"], "dist": row["거리_km"]}
             )
 
-        for _, row in sido_df.iterrows():
-            row["시도코드"] = str(int(row["시도코드"])).zfill(2)
+        
+        for _, row in cgg_station_map_df.iterrows():
+            
             conn.execute(
-                text("INSERT INTO SIDO_NAME (시도코드, 시도명) VALUES (:sido_code, :sido_name)"),
-                {"sido_code": row["시도코드"], "sido_name": row["시도명"]}
+                text("INSERT INTO SUBWAY_CGG_MAPPING (역명, 자치구명) VALUES (:station_name, :cgg_name)"),
+                {"station_name": row["역명"], "cgg_name": row["자치구명"]}
             )
+
