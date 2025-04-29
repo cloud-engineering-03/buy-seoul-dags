@@ -52,17 +52,17 @@ def insert_init_data():
                 {"station_name": row["역명"], "cgg_name": row["자치구명"]}
             )
 
-        for _, row in gu_df.iterrows():
+        # for _, row in gu_df.iterrows():
             
-            conn.execute(
-                text("INSERT INTO CGG_NM (자치구코드, 군구명) VALUES (:code, :name)"),
-                {"code": row["자치구코드"], "name": row["군구명"]}
-            )
+        #     conn.execute(
+        #         text("INSERT INTO CGG_NM (자치구코드, 군구명) VALUES (:code, :name)"),
+        #         {"code": row["자치구코드"], "name": row["군구명"]}
+        #     )
 
-        for _, row in dist_df.iterrows():
-            row["기준자치구코드"] = str(int(row["기준자치구코드"])).zfill(5)
-            row["인접자치구코드"] = str(int(row["인접자치구코드"])).zfill(5)
-            conn.execute(
-                text("INSERT INTO NEAR_CGG_NAME (기준자치구코드, 인접자치구코드, 거리_km) VALUES (:from_, :to_, :dist)"),
-                {"from_": row["기준자치구코드"], "to_": row["인접자치구코드"], "dist": row["거리_km"]}
-            )
+        # for _, row in dist_df.iterrows():
+        #     row["기준자치구코드"] = str(int(row["기준자치구코드"])).zfill(5)
+        #     row["인접자치구코드"] = str(int(row["인접자치구코드"])).zfill(5)
+        #     conn.execute(
+        #         text("INSERT INTO NEAR_CGG_NAME (기준자치구코드, 인접자치구코드, 거리_km) VALUES (:from_, :to_, :dist)"),
+        #         {"from_": row["기준자치구코드"], "to_": row["인접자치구코드"], "dist": row["거리_km"]}
+        #     )
