@@ -48,8 +48,8 @@ def insert_init_data():
         for _, row in cgg_station_map_df.iterrows():
             
             conn.execute(
-                text("INSERT INTO SUBWAY_CGG_MAPPING (역명, 자치구명) VALUES (:code, :name)"),
-                {"code": row["역명"], "name": row["자치구명"]}
+                text("INSERT INTO SUBWAY_CGG_MAPPING (역명, 자치구명) VALUES (:station_name, :cgg_name)"),
+                {"station_name": row["역명"], "cgg_name": row["자치구명"]}
             )
 
         for _, row in gu_df.iterrows():
