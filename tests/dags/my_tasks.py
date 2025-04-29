@@ -51,7 +51,8 @@ def table_exist():
 	권리구분 varchar(10) NULL,
 	접수연도 int4 NULL,
 	"신고한 개업공인중개사 시군구명" varchar(40) NULL,
-	CONSTRAINT ESTATE_DATA_pkey PRIMARY KEY (id)
+	CONSTRAINT ESTATE_DATA_pkey PRIMARY KEY (id),
+    FOREIGN KEY (자치구코드) REFERENCES CGG_NM(자치구코드)
 );"""
     cur.execute(sql)
     conn.commit()
