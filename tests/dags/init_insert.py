@@ -78,6 +78,8 @@ def insert_init_data():
             row["기준자치구코드"] = str(int(row["기준자치구코드"])).zfill(5)
             row["인접자치구코드"] = str(int(row["인접자치구코드"])).zfill(5)
             row["거리_km"] = float(row["거리_km"])
+            print(text("INSERT INTO NEAR_CGG_NAME (기준자치구코드, 인접자치구코드, 거리_km) VALUES (:from_, :to_, :dist)"),
+                {"from_": row["기준자치구코드"], "to_": row["인접자치구코드"], "dist": row["거리_km"]})
             conn.execute(
                 text("INSERT INTO NEAR_CGG_NAME (기준자치구코드, 인접자치구코드, 거리_km) VALUES (:from_, :to_, :dist)"),
                 {"from_": row["기준자치구코드"], "to_": row["인접자치구코드"], "dist": row["거리_km"]}
