@@ -28,6 +28,13 @@ def insert_init_data():
             );
         """))
 
+        conn.execute(text("""
+            REATE TABLE IF NOT EXISTS public.SUBWAY_CGG_MAPPING (
+                역명 VARCHAR(50) PRIMARY KEY,
+                자치구명 VARCHAR(20) NOT NULL
+            );
+        """))
+
     # 2. JSON 로드 및 INSERT
     curdir = os.path.dirname(os.path.abspath(__file__))
     # current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -35,14 +42,23 @@ def insert_init_data():
     # gu_df = pd.read_json(curdir"/자치구코드_군구명_매핑.json")
     gu_df = pd.read_json(os.path.join(curdir,"자치구코드_군구명_매핑.json"))
     dist_df = pd.read_json(os.path.join(curdir,"인접자치구_거리.json"))
+    cgg_station_map_df = pd.read_csv(os.path.join(curdir,"서울지하철_역위치_자치구매핑완료.json"))
     
     with engine.begin() as conn:
+        for _, row in cgg_station_map_df.iterrows():
+            
+            conn.execute(
+                text("INSERT INTO SUBWAY_CGG_MAPPING (역명, 자치구명) VALUES (:code, :name)"),
+                {"code": row["역명"], "name": row["자치구명"]}
+            )
+
         for _, row in gu_df.iterrows():
             
             conn.execute(
                 text("INSERT INTO CGG_NM (자치구코드, 군구명) VALUES (:code, :name)"),
                 {"code": row["자치구코드"], "name": row["군구명"]}
             )
+
         for _, row in dist_df.iterrows():
             row["기준자치구코드"] = str(int(row["기준자치구코드"])).zfill(5)
             row["인접자치구코드"] = str(int(row["인접자치구코드"])).zfill(5)
