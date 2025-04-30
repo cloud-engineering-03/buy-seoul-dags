@@ -19,7 +19,7 @@ def insert_init_data():
         """))
 
         conn.execute(text("""
-            DROP TABLE IF EXISTS public.NEAR_CGG_NAME;
+            DROP TABLE IF EXISTS public.NEAR_CGG_NAME CASCADE;
             CREATE TABLE public.NEAR_CGG_NAME (
                 기준자치구코드 CHAR(5),
                 인접자치구코드 CHAR(5),
@@ -31,7 +31,7 @@ def insert_init_data():
         """))
         
         conn.execute(text("""
-            DROP TABLE IF EXISTS public.SUBWAY_CGG_MAPPING;
+            DROP TABLE IF EXISTS public.SUBWAY_CGG_MAPPING CASCADE;
             CREATE TABLE public.SUBWAY_CGG_MAPPING (
                 STATION_NM VARCHAR(50) PRIMARY KEY,
                 위도 DOUBLE PRECISION,
@@ -43,14 +43,14 @@ def insert_init_data():
         """))
         
         conn.execute(text("""
-            DROP TABLE IF EXISTS public.SIDO_NAME;
+            DROP TABLE IF EXISTS public.SIDO_NAME CASCADE;
             CREATE TABLE public.SIDO_NAME (
                 시도코드 CHAR(2) PRIMARY KEY,
                 시도명 VARCHAR(50) NOT NULL
             );
         """))
         conn.execute(text("""
-            DROP TABLE IF EXISTS public.SUBWAY_STATION_MAPPING;
+            DROP TABLE IF EXISTS public.SUBWAY_STATION_MAPPING CASCADE;
             CREATE TABLE public.SUBWAY_STATION_MAPPING (
                 STATION_NM VARCHAR(50) NOT NULL,
                 LINE_NUM VARCHAR(50),
