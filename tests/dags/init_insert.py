@@ -29,12 +29,15 @@ def insert_init_data():
                 FOREIGN KEY (인접자치구코드) REFERENCES CGG_NM(자치구코드)
             );
         """))
-
+        
         conn.execute(text("""
             DROP TABLE IF EXISTS public.SUBWAY_CGG_MAPPING;
             CREATE TABLE public.SUBWAY_CGG_MAPPING (
-                역명 VARCHAR(50) PRIMARY KEY,
+                STATION_NM VARCHAR(50) PRIMARY KEY,
+                위도 DOUBLE PRECISION,
+                경도 DOUBLE PRECISION,
                 자치구코드 CHAR(5) NOT NULL,
+                STATION_NM_ENG VARCHAR(50),
                 FOREIGN KEY (자치구코드) REFERENCES CGG_NM(자치구코드)
             );
         """))
@@ -44,6 +47,15 @@ def insert_init_data():
             CREATE TABLE public.SIDO_NAME (
                 시도코드 CHAR(2) PRIMARY KEY,
                 시도명 VARCHAR(50) NOT NULL
+            );
+        """))
+        conn.execute(text("""
+            DROP TABLE IF EXISTS public.SUBWAY_STATION_MAPPING;
+            CREATE TABLE public.SIDO_NAME (
+                STATION_NM VARCHAR(50) NOT NULL,
+                LINE_NUM VARCHAR(50),
+                PRIMARY KEY (STATION_NM,LINE_NUM),
+                FOREIGN KEY (STATION_NM) REFERENCES SUBWAY_CGG_MAPPING(역명)
             );
         """))
 
@@ -58,7 +70,8 @@ def insert_init_data():
     dist_df = pd.read_json(os.path.join(curdir,"인접자치구_거리.json"))
     dist_df["기준자치구코드"] = dist_df["기준자치구코드"].astype(str).str.zfill(5)
     dist_df["인접자치구코드"] = dist_df["인접자치구코드"].astype(str).str.zfill(5)
-    cgg_station_map_df = pd.read_csv(os.path.join(curdir,"서울지하철_역위치_자치구매핑완료_서울경기인천.csv"))
+    cgg_station_map_df = pd.read_csv(os.path.join(curdir,"서울지하철_역위치_영문명_자치구매핑완료.csv"))
+    subway_line_df = pd.read_csv(os.path.join(curdir,"서울지하철_역호선_매핑테이블.csv"))
 
     
     with engine.begin() as conn:
@@ -85,9 +98,15 @@ def insert_init_data():
 
         
         for _, row in cgg_station_map_df.iterrows():
+            conn.execute(
+                text("INSERT INTO SUBWAY_CGG_MAPPING (STATION_NM,위도,경도,자치구코드,STATION_NM_ENG) VALUES (:station_name,:lat, :lon, :cgg_code, :eng_name)"),
+                {"station_name": row["역명"], "cgg_code": row["자치구코드"],"lat": row["위도"], "lon": row["경도"],"eng_name": row["STATION_NM_ENG"]}
+            )
+        
+        for _, row in subway_line_df.iterrows():
             
             conn.execute(
-                text("INSERT INTO SUBWAY_CGG_MAPPING (역명, 자치구코드) VALUES (:station_name, :cgg_name)"),
-                {"station_name": row["역명"], "cgg_name": row["자치구코드"]}
+                text("INSERT INTO SUBWAY_STATION_MAPPING (STATION_NM,LINE_NUM) VALUES (:station_name, :line_num)"),
+                {"station_name": row["STATION_NM"], "line_num": row["LINE_NUM"]}
             )
 
