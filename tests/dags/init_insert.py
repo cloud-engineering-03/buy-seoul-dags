@@ -100,7 +100,7 @@ def insert_init_data():
         for _, row in cgg_station_map_df.iterrows():
             conn.execute(
                 text("INSERT INTO SUBWAY_CGG_MAPPING (STATION_NM,위도,경도,자치구코드,STATION_NM_ENG) VALUES (:station_name,:lat, :lon, :cgg_code, :eng_name)"),
-                {"station_name": row["역명"], "cgg_code": row["자치구코드"],"lat": row["위도"], "lon": row["경도"],"eng_name": row["STATION_NM_ENG"]}
+                {"station_name": row["STATION_NM"], "cgg_code": row["자치구코드"],"lat": row["위도"], "lon": row["경도"],"eng_name": row["STATION_NM_ENG"]}
             )
         
         for _, row in subway_line_df.iterrows():
