@@ -51,7 +51,7 @@ def insert_init_data():
         """))
         conn.execute(text("""
             DROP TABLE IF EXISTS public.SUBWAY_STATION_MAPPING;
-            CREATE TABLE public.SIDO_NAME (
+            CREATE TABLE public.SUBWAY_STATION_MAPPING (
                 STATION_NM VARCHAR(50) NOT NULL,
                 LINE_NUM VARCHAR(50),
                 PRIMARY KEY (STATION_NM,LINE_NUM),
