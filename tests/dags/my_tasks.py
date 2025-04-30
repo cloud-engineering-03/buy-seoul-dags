@@ -77,38 +77,80 @@ def fetch_raw_data(**context):
     # 기본 설정 변수
     service_name = "tbLnOpendataRtmsV"  # API 서비스명 (거래 데이터)
     base_url = "http://openapi.seoul.go.kr:8088"
-    start_index = 1
-    end_index = 500
+    # start_index = 1
+    # end_index = 500
 
-    # 오늘 날짜 기준 (예: 20250411 → 202504 형식)
+    # # 오늘 날짜 기준 (예: 20250411 → 202504 형식)
+    # today = datetime.today()
+    # yyyymm = today.strftime("%Y%m")
+
+    # # 요청 URL 구성
+    # url = f"{base_url}/{api_key}/json/{service_name}/{start_index}/{end_index}/"
+    # params = {
+    #     "DEAL_YMD": yyyymm  # 거래년월 필터
+    # }
+
+    # # 요청 실행
+    # response = requests.get(url, params=params)
+
+    # # 결과 처리
+    # if response.status_code == 200:
+    #     print(response)
+    #     data = response.json()
+    #     items = data.get(service_name, {}).get("row", [])
+    #     df = pd.DataFrame(items)
+    #     print(df.head())
+    # else:
+    #     print(f"요청 실패: {response.status_code}")
+    # df.head()
+
+    # column_mapping = {"RTRCN_DAY":"취소일","LAND_AREA":"토지면적","STDG_CD":"법정동코드","BLDG_NM":"건물명","STDG_NM":"법정동명","MNO":"본번","THING_AMT":"물건금액","LOTNO_SE_NM":"지번구분명","LOTNO_SE":"지번구분","CTRT_DAY":"계약일","RCPT_YR":"접수연도","OPBIZ_RESTAGNT_SGG_NM":"신고한 개업공인중개사 시군구명","ARCH_AREA":"건물면적","CGG_CD":"자치구코드","RGHT_SE":"권리구분","SNO":"부번","FLR":"층","CGG_NM":"자치구명","BLDG_USG":"건물용도","ARCH_YR":"건축년도","DCLR_SE":"신고구분"}
+
+    # # 'DATA' 부분을 DataFrame으로 변환
+    # df.rename(columns=column_mapping, inplace=True)
+    # context['ti'].xcom_push(key='raw_df', value=df.to_json())
+    step = 1000  # API 최대 반환 건수 권장 단위
     today = datetime.today()
-    yyyymm = today.strftime("%Y%m")
+    year = today.strftime("%Y")
 
-    # 요청 URL 구성
-    url = f"{base_url}/{api_key}/json/{service_name}/{start_index}/{end_index}/"
-    params = {
-        "DEAL_YMD": yyyymm  # 거래년월 필터
+    all_rows = []
+
+    for month in range(1, 13):
+        deal_ymd = f"{year}{str(month).zfill(2)}"
+        for start in range(1, 10001, step):  # 최대 10,000건까지 페이징
+            end = start + step - 1
+            url = f"{base_url}/{api_key}/json/{service_name}/{start}/{end}/"
+            params = {"DEAL_YMD": deal_ymd}
+            response = requests.get(url, params=params)
+            if response.status_code != 200:
+                print(f"[{deal_ymd}] 요청 실패: {response.status_code}")
+                break
+            data = response.json()
+            items = data.get(service_name, {}).get("row", [])
+            if not items:
+                break  # 더 이상 없음
+            all_rows.extend(items)
+
+    if not all_rows:
+        print("❌ 수집된 데이터가 없습니다.")
+        return
+
+    df = pd.DataFrame(all_rows)
+
+    column_mapping = {
+        "RTRCN_DAY": "취소일", "LAND_AREA": "토지면적", "STDG_CD": "법정동코드",
+        "BLDG_NM": "건물명", "STDG_NM": "법정동명", "MNO": "본번",
+        "THING_AMT": "물건금액", "LOTNO_SE_NM": "지번구분명", "LOTNO_SE": "지번구분",
+        "CTRT_DAY": "계약일", "RCPT_YR": "접수연도", "OPBIZ_RESTAGNT_SGG_NM": "신고한 개업공인중개사 시군구명",
+        "ARCH_AREA": "건물면적", "CGG_CD": "자치구코드", "RGHT_SE": "권리구분",
+        "SNO": "부번", "FLR": "층", "CGG_NM": "자치구명",
+        "BLDG_USG": "건물용도", "ARCH_YR": "건축년도", "DCLR_SE": "신고구분"
     }
-
-    # 요청 실행
-    response = requests.get(url, params=params)
-
-    # 결과 처리
-    if response.status_code == 200:
-        print(response)
-        data = response.json()
-        items = data.get(service_name, {}).get("row", [])
-        df = pd.DataFrame(items)
-        print(df.head())
-    else:
-        print(f"요청 실패: {response.status_code}")
-    df.head()
-
-    column_mapping = {"RTRCN_DAY":"취소일","LAND_AREA":"토지면적","STDG_CD":"법정동코드","BLDG_NM":"건물명","STDG_NM":"법정동명","MNO":"본번","THING_AMT":"물건금액","LOTNO_SE_NM":"지번구분명","LOTNO_SE":"지번구분","CTRT_DAY":"계약일","RCPT_YR":"접수연도","OPBIZ_RESTAGNT_SGG_NM":"신고한 개업공인중개사 시군구명","ARCH_AREA":"건물면적","CGG_CD":"자치구코드","RGHT_SE":"권리구분","SNO":"부번","FLR":"층","CGG_NM":"자치구명","BLDG_USG":"건물용도","ARCH_YR":"건축년도","DCLR_SE":"신고구분"}
-
-    # 'DATA' 부분을 DataFrame으로 변환
     df.rename(columns=column_mapping, inplace=True)
+
+    # XCom으로 전달
     context['ti'].xcom_push(key='raw_df', value=df.to_json())
+    print(f"[✅ 수집 완료] 총 수집 행 수: {len(df)}")
 
 def validate_data():
     # df 불러와 유효성 검사
