@@ -53,7 +53,20 @@ def table_exist():
 	"신고한 개업공인중개사 시군구명" varchar(40) NULL,
 	CONSTRAINT ESTATE_DATA_pkey PRIMARY KEY (id),
     FOREIGN KEY (자치구코드) REFERENCES CGG_NM(자치구코드)
-);"""
+);
+    DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM pg_constraint
+                WHERE conname = 'estate_data_자치구코드_fkey'
+            ) THEN
+                ALTER TABLE public.ESTATE_DATA
+                ADD CONSTRAINT estate_data_자치구코드_fkey
+                FOREIGN KEY (자치구코드) REFERENCES CGG_NM(자치구코드);
+            END IF;
+        END
+        $$;"""
     cur.execute(sql)
     conn.commit()
 
