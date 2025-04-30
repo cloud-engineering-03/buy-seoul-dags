@@ -55,7 +55,7 @@ def insert_init_data():
                 STATION_NM VARCHAR(50) NOT NULL,
                 LINE_NUM VARCHAR(50),
                 PRIMARY KEY (STATION_NM,LINE_NUM),
-                FOREIGN KEY (STATION_NM) REFERENCES SUBWAY_CGG_MAPPING(역명)
+                FOREIGN KEY (STATION_NM) REFERENCES SUBWAY_CGG_MAPPING(STATION_NM)
             );
         """))
 
