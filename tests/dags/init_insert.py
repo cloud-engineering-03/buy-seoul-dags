@@ -1,4 +1,3 @@
-
 from sqlalchemy import create_engine, text
 import pandas as pd
 import os
@@ -9,53 +8,84 @@ def insert_init_data():
     engine = create_engine(db_url)
 
     # 1. CREATE TABLE 쿼리 실행
+        
     with engine.begin() as conn:
+
         conn.execute(text("""
-            DROP TABLE IF EXISTS public.CGG_NM CASCADE;
-            CREATE TABLE public.CGG_NM (
-                자치구코드 CHAR(5) PRIMARY KEY,
-                군구명 VARCHAR(20)
+            DROP TABLE IF EXISTS public.PROVINCE CASCADE;
+            CREATE TABLE public.PROVINCE (
+                province_code CHAR(2) PRIMARY KEY,
+                province_name VARCHAR(50)
+            );
+        """))
+        
+        conn.execute(text("""
+            DROP TABLE IF EXISTS public.DISTRICT CASCADE;
+            CREATE TABLE public.DISTRICT (
+                district_code CHAR(5) PRIMARY KEY,
+                district_name VARCHAR(20),
+                FOREIGN KEY (province_code) REFERENCES PROVINCE(province_code)
             );
         """))
 
         conn.execute(text("""
-            DROP TABLE IF EXISTS public.NEAR_CGG_NAME CASCADE;
-            CREATE TABLE public.NEAR_CGG_NAME (
-                기준자치구코드 CHAR(5),
-                인접자치구코드 CHAR(5),
-                거리_km FLOAT,
-                PRIMARY KEY (기준자치구코드, 인접자치구코드),
-                FOREIGN KEY (기준자치구코드) REFERENCES CGG_NM(자치구코드),
-                FOREIGN KEY (인접자치구코드) REFERENCES CGG_NM(자치구코드)
+            DROP TABLE IF EXISTS public.NEARBY_DISTRICT CASCADE;
+            CREATE TABLE public.NEARBY_DISTRICT (
+                FOREIGN KEY (base_district_code) REFERENCES DISTRICT(district_code),
+                FOREIGN KEY (adjacent_district_code) REFERENCES DISTRICT(district_code),
+                distance DOUBLE,
+                PRIMARY KEY (base_district_code, adjacent_district_code)
             );
         """))
         
         conn.execute(text("""
-            DROP TABLE IF EXISTS public.SUBWAY_CGG_MAPPING CASCADE;
-            CREATE TABLE public.SUBWAY_CGG_MAPPING (
-                STATION_NM VARCHAR(50) PRIMARY KEY,
-                위도 DOUBLE PRECISION,
-                경도 DOUBLE PRECISION,
-                자치구코드 CHAR(5) NOT NULL,
-                STATION_NM_ENG VARCHAR(50),
-                FOREIGN KEY (자치구코드) REFERENCES CGG_NM(자치구코드)
+            DROP TABLE IF EXISTS public.STATION CASCADE;
+            CREATE TABLE public.STATION (
+                station_id int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+                station_name VARCHAR(50),
+                station_name_eng VARCHAR(50),
+                latitude DOUBLE,
+                longitude DOUBLE,
+                FOREIGN KEY (district_code) REFERENCES DISTRICT(district_code)
+            );
+        """))
+
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS public.REAL_ESTATE_TRANSACTION  (
+            id int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+            district_code varchar(5) NULL,
+            legal_dong_code varchar(10) NULL,
+            contract_date date NULL,
+            cancellation_date date NULL,
+            lot_type int4 NULL,
+            lot_type_name varchar(10) NULL,
+            main_lot_number varchar(4) NULL,
+            sub_lot_number varchar(4) NULL,
+            building_name varchar(100) NULL,
+            floor int4 NULL,
+            building_area double NULL,
+            land_area double NULL,
+            transaction_amount double NULL,
+            building_usage varchar(100) NULL,
+            construction_year int4 NULL,
+            report_type varchar(10) NULL,
+            ownership_type varchar(10) NULL,
+            report_year int4 NULL,
+            agent_office_district_name varchar(40) NULL,
+            CONSTRAINT ESTATE_DATA_pkey PRIMARY KEY (id),
+            FOREIGN KEY (district_code) REFERENCES DISTRICT(district_code)
             );
         """))
         
+        
         conn.execute(text("""
-            DROP TABLE IF EXISTS public.SIDO_NAME CASCADE;
-            CREATE TABLE public.SIDO_NAME (
-                시도코드 CHAR(2) PRIMARY KEY,
-                시도명 VARCHAR(50) NOT NULL
-            );
-        """))
-        conn.execute(text("""
-            DROP TABLE IF EXISTS public.SUBWAY_STATION_MAPPING CASCADE;
-            CREATE TABLE public.SUBWAY_STATION_MAPPING (
-                STATION_NM VARCHAR(50) NOT NULL,
-                LINE_NUM VARCHAR(50),
-                PRIMARY KEY (STATION_NM,LINE_NUM),
-                FOREIGN KEY (STATION_NM) REFERENCES SUBWAY_CGG_MAPPING(STATION_NM)
+            DROP TABLE IF EXISTS public.STATION_LINE_MAP CASCADE;
+            CREATE TABLE public.STATION_LINE_MAP (
+                station_id integer NOT NULL,
+                line_number VARCHAR(10),
+                PRIMARY KEY (station_id,line_number),
+                FOREIGN KEY (station_id) REFERENCES STATION(station_id)
             );
         """))
 
@@ -79,34 +109,33 @@ def insert_init_data():
         for _, row in gu_df.iterrows():
             
             conn.execute(
-                text("INSERT INTO CGG_NM (자치구코드, 군구명) VALUES (:code, :name)"),
+                text("INSERT INTO DISTRICT (district_code, district_name) VALUES (:code, :name)"),
                 {"code": row["자치구코드"], "name": row["군구명"]}
             )
         for _, row in sido_df.iterrows():
             row["시도코드"] = str(int(row["시도코드"])).zfill(2)
             conn.execute(
-                text("INSERT INTO SIDO_NAME (시도코드, 시도명) VALUES (:sido_code, :sido_name)"),
+                text("INSERT INTO PROVINCE (province_code, province_name) VALUES (:sido_code, :sido_name)"),
                 {"sido_code": row["시도코드"], "sido_name": row["시도명"]}
             )
 
         print(len(dist_df))
         for _, row in dist_df.iterrows():
             conn.execute(
-                text("INSERT INTO NEAR_CGG_NAME (기준자치구코드, 인접자치구코드, 거리_km) VALUES (:from_, :to_, :dist)"),
+                text("INSERT INTO NEARBY_DISTRICT (base_district_code, adjacent_district_code, distance) VALUES (:from_, :to_, :dist)"),
                 {"from_": row["기준자치구코드"], "to_": row["인접자치구코드"], "dist": row["거리_km"]}
             )
 
         
         for _, row in cgg_station_map_df.iterrows():
             conn.execute(
-                text("INSERT INTO SUBWAY_CGG_MAPPING (STATION_NM,위도,경도,자치구코드,STATION_NM_ENG) VALUES (:station_name,:lat, :lon, :cgg_code, :eng_name)"),
+                text("INSERT INTO STATION (station_name, latitude, longitude, district_code, station_name_eng) VALUES (:station_name,:lat, :lon, :cgg_code, :eng_name)"),
                 {"station_name": row["STATION_NM"], "cgg_code": row["자치구코드"],"lat": row["위도"], "lon": row["경도"],"eng_name": row["STATION_NM_ENG"]}
             )
         
         for _, row in subway_line_df.iterrows():
             
             conn.execute(
-                text("INSERT INTO SUBWAY_STATION_MAPPING (STATION_NM,LINE_NUM) VALUES (:station_name, :line_num)"),
+                text("INSERT INTO STATION_LINE_MAP (station_id, line_number) VALUES (:station_name, :line_num)"),
                 {"station_name": row["STATION_NM"], "line_num": row["LINE_NUM"]}
             )
-
