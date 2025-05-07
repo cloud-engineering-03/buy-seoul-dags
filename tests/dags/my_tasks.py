@@ -1,4 +1,3 @@
-
 import os
 from dotenv import load_dotenv
 import requests
@@ -172,6 +171,25 @@ def insert_data(**context):
 
     # 전역 None/결측 처리
     df = df.replace([pd.NaT,'', ' ', 'null', 'N/A'], None)
+
+    df = df.rename(columns={
+        "자치구코드": "district_code", "법정동코드": "legal_dong_code",
+        "계약일": "contract_date", "취소일": "cancellation_date",
+        "지번구분": "lot_type", "지번구분명": "lot_type_name",
+        "본번": "main_lot_number", "부번": "sub_lot_number",
+        "건물명": "building_name", "층": "floor",
+        "건물면적": "building_area", "토지면적": "land_area",
+        "물건금액": "transaction_amount", "건물용도": "building_usage",
+        "건축년도": "construction_year", "신고구분": "report_type",
+        "권리구분": "ownership_type", "접수연도": "report_year",
+        "신고한 개업공인중개사 시군구명": "agent_office_district_name"
+    })
+    df = df[[  # Reorder and subset to ensure correct columns
+        "district_code", "legal_dong_code", "contract_date", "cancellation_date", "lot_type", "lot_type_name",
+        "main_lot_number", "sub_lot_number", "building_name", "floor", "building_area", "land_area",
+        "transaction_amount", "building_usage", "construction_year", "report_type", "ownership_type",
+        "report_year", "agent_office_district_name"
+    ]]
 
     print(df.head(10))
 
