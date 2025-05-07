@@ -129,10 +129,10 @@ def insert_init_data():
     with engine.begin() as conn:
         
         for _, row in sido_df.iterrows():
-            row["시도코드"] = str(int(row["시도코드"])).zfill(2)
+            # row["시도코드"] = str(int(row["시도코드"])).zfill(2)
             conn.execute(
-                text("INSERT INTO PROVINCE (province_code, province_name) VALUES (:sido_code, :sido_name)"),
-                {"sido_code": row["시도코드"], "sido_name": row["시도명"]}
+                text("INSERT INTO PROVINCE (province_code, province_name) VALUES (:code, :name)"),
+                {"code": row["시도코드"], "name": row["시도명"]}
             )
 
 
