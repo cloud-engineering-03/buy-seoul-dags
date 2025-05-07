@@ -139,13 +139,6 @@ def insert_init_data():
         for _, row in gu_df.iterrows():
             
             conn.execute(
-                text("INSERT INTO PROVINCE (province_code, province_name) VALUES (:code, :name)"),
-                {"code": row["자치구코드"], "name": row["군구명"]}, 
-            )
-
-        for _, row in gu_df.iterrows():
-            
-            conn.execute(
                 text("INSERT INTO DISTRICT (district_code, district_name,province_code) VALUES (:code, :name, :province_code)"),
                 {"code": row["자치구코드"], "name": row["군구명"], "province_code": str(row["자치구코드"])[:2]}, 
             )
