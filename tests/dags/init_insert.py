@@ -138,4 +138,5 @@ def insert_init_data():
             conn.execute(
                 text("INSERT INTO STATION_LINE_MAP (station_id, line_number) VALUES (:station_name, :line_num)"),
                 {"station_name": row["STATION_NM"], "line_num": row["LINE_NUM"]}
+            )
 
