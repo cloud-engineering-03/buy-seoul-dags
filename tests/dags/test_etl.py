@@ -1,7 +1,8 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
-from my_tasks import fetch_raw_data, validate_data, insert_data, prune_old_data, t5_check_table, table_exist
+from my_tasks import fetch_raw_data, validate_data, insert_data, prune_old_data, t5_check_table
+# from my_tasks import fetch_raw_data, validate_data, insert_data, prune_old_data, t5_check_table, table_exist
 with DAG("seoul_etl_pipeline", start_date=datetime(2024, 1, 1), schedule_interval="@daily", catchup=False) as dag:
     # t0 = PythonOperator(task_id="table_exist", python_callable=table_exist)
     t1 = PythonOperator(task_id="fetch_raw_data", python_callable=fetch_raw_data)
