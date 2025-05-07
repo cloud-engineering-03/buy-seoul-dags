@@ -86,7 +86,7 @@ def insert_init_data():
         conn.execute(text("""
             DROP TABLE IF EXISTS public.STATION_LINE_MAP CASCADE;
             CREATE TABLE public.STATION_LINE_MAP (
-                station_id integer NOT NULL,
+                station_id int4 NOT NULL,
                 line_number VARCHAR(10),
                 PRIMARY KEY (station_id,line_number),
                 FOREIGN KEY (station_id) REFERENCES STATION(station_id)
