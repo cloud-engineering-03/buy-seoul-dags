@@ -157,10 +157,10 @@ def insert_init_data():
                 {"station_name": row["STATION_NM"], "cgg_code": row["자치구코드"],"lat": row["위도"], "lon": row["경도"],"eng_name": row["STATION_NM_ENG"]}
             )
         
-        for _, row in subway_line_df.iterrows():
+        # for _, row in subway_line_df.iterrows():
             
-            conn.execute(
-                text("INSERT INTO STATION_LINE_MAP (station_id, line_number) VALUES (:station_name, :line_num)"),
-                {"station_name": row["STATION_NM"], "line_num": row["LINE_NUM"]}
-            )
+        #     conn.execute(
+        #         text("INSERT INTO STATION_LINE_MAP (station_id, line_number) VALUES (:station_name, :line_num)"),
+        #         {"station_name": row["STATION_NM"], "line_num": row["LINE_NUM"]}
+        #     )
 
