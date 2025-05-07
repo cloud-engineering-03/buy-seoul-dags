@@ -24,6 +24,7 @@ def insert_init_data():
             CREATE TABLE public.DISTRICT (
                 district_code CHAR(5) PRIMARY KEY,
                 district_name VARCHAR(20),
+                province_code CHAR(2),
                 FOREIGN KEY (province_code) REFERENCES PROVINCE(province_code)
             );
         """))
