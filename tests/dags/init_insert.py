@@ -34,7 +34,7 @@ def insert_init_data():
             CREATE TABLE public.NEARBY_DISTRICT (
                 FOREIGN KEY (base_district_code) REFERENCES DISTRICT(district_code),
                 FOREIGN KEY (adjacent_district_code) REFERENCES DISTRICT(district_code),
-                distance DOUBLE float,
+                distance DOUBLE PRECISION,
                 PRIMARY KEY (base_district_code, adjacent_district_code)
             );
         """))
@@ -45,8 +45,8 @@ def insert_init_data():
                 station_id int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
                 station_name VARCHAR(50),
                 station_name_eng VARCHAR(50),
-                latitude DOUBLE float,
-                longitude DOUBLE float,
+                latitude DOUBLE PRECISION,
+                longitude DOUBLE PRECISION,
                 FOREIGN KEY (district_code) REFERENCES DISTRICT(district_code)
             );
         """))
@@ -65,9 +65,9 @@ def insert_init_data():
             sub_lot_number varchar(4) NULL,
             building_name varchar(100) NULL,
             floor int4 NULL,
-            building_area double float NULL,
-            land_area double float NULL,
-            transaction_amount double float NULL,
+            building_area DOUBLE PRECISION NULL,
+            land_area DOUBLE PRECISION NULL,
+            transaction_amount DOUBLE PRECISION NULL,
             building_usage varchar(100) NULL,
             construction_year int4 NULL,
             report_type varchar(10) NULL,
