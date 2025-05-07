@@ -132,7 +132,7 @@ def insert_init_data():
             
             conn.execute(
                 text("INSERT INTO DISTRICT (district_code, district_name,province_code) VALUES (:code, :name, :province_code)"),
-                {"code": row["자치구코드"], "name": row["군구명"], "province_code": row["자치구코드"].str()[:2]}, 
+                {"code": row["자치구코드"], "name": row["군구명"], "province_code": str(row["자치구코드"])[:2]}, 
             )
         for _, row in sido_df.iterrows():
             row["시도코드"] = str(int(row["시도코드"])).zfill(2)
