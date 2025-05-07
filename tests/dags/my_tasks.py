@@ -1,0 +1,274 @@
+
+import os
+from dotenv import load_dotenv
+import requests
+import datetime
+import pandas as pd
+from sqlalchemy import create_engine, text
+from datetime import datetime, timedelta
+from airflow import DAG
+import numpy as np
+from sqlalchemy.engine import make_url
+import psycopg2
+from psycopg2.extras import execute_values
+from airflow.models import Variable
+
+
+db_url = "postgresql+psycopg2://test:test@postgres-postgresql.postgres.svc.cluster.local:5432/testdb"
+
+
+
+
+# def table_exist():
+    
+#     url = make_url(db_url)
+#     conn = psycopg2.connect(
+#         dbname=url.database,
+#         user=url.username,
+#         password=url.password,
+#         host=url.host,
+#         port=url.port
+#     )
+#     cur = conn.cursor()
+#     sql = """CREATE TABLE IF NOT EXISTS public.ESTATE_DATA (
+# 	id int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+# 	자치구코드 varchar(5) NULL,
+# 	법정동코드 varchar(10) NULL,
+# 	계약일 date NULL,
+# 	취소일 date NULL,
+# 	지번구분 int4 NULL,
+# 	지번구분명 varchar(10) NULL,
+# 	본번 varchar(4) NULL,
+# 	부번 varchar(4) NULL,
+# 	건물명 varchar NULL,
+# 	층 int4 NULL,
+# 	"건물면적" float8 NULL,
+# 	"토지면적" float8 NULL,
+# 	"물건금액" float8 NULL,
+# 	건물용도 varchar NULL,
+# 	건축년도 int4 NULL,
+# 	신고구분 varchar(10) NULL,
+# 	권리구분 varchar(10) NULL,
+# 	접수연도 int4 NULL,
+# 	"신고한 개업공인중개사 시군구명" varchar(40) NULL,
+# 	CONSTRAINT ESTATE_DATA_pkey PRIMARY KEY (id),
+#     FOREIGN KEY (자치구코드) REFERENCES CGG_NM(자치구코드)
+# );
+#     DO $$
+#         BEGIN
+#             IF NOT EXISTS (
+#                 SELECT 1
+#                 FROM pg_constraint
+#                 WHERE conname = 'estate_data_자치구코드_fkey'
+#             ) THEN
+#                 ALTER TABLE public.ESTATE_DATA
+#                 ADD CONSTRAINT estate_data_자치구코드_fkey
+#                 FOREIGN KEY (자치구코드) REFERENCES CGG_NM(자치구코드);
+#             END IF;
+#         END
+#         $$;"""
+#     cur.execute(sql)
+#     conn.commit()
+
+def fetch_raw_data(**context):
+    # API 요청 + DataFrame 생성 + XCom push
+    api_key = Variable.get("SEOUL_API_KEY")
+    print(api_key)
+    # 기본 설정 변수
+    service_name = "tbLnOpendataRtmsV"  # API 서비스명 (거래 데이터)
+    base_url = "http://openapi.seoul.go.kr:8088"
+    # start_index = 1
+    # end_index = 500
+
+    # # 오늘 날짜 기준 (예: 20250411 → 202504 형식)
+    # today = datetime.today()
+    # yyyymm = today.strftime("%Y%m")
+
+    # # 요청 URL 구성
+    # url = f"{base_url}/{api_key}/json/{service_name}/{start_index}/{end_index}/"
+    # params = {
+    #     "DEAL_YMD": yyyymm  # 거래년월 필터
+    # }
+
+    # # 요청 실행
+    # response = requests.get(url, params=params)
+
+    # # 결과 처리
+    # if response.status_code == 200:
+    #     print(response)
+    #     data = response.json()
+    #     items = data.get(service_name, {}).get("row", [])
+    #     df = pd.DataFrame(items)
+    #     print(df.head())
+    # else:
+    #     print(f"요청 실패: {response.status_code}")
+    # df.head()
+
+    # column_mapping = {"RTRCN_DAY":"취소일","LAND_AREA":"토지면적","STDG_CD":"법정동코드","BLDG_NM":"건물명","STDG_NM":"법정동명","MNO":"본번","THING_AMT":"물건금액","LOTNO_SE_NM":"지번구분명","LOTNO_SE":"지번구분","CTRT_DAY":"계약일","RCPT_YR":"접수연도","OPBIZ_RESTAGNT_SGG_NM":"신고한 개업공인중개사 시군구명","ARCH_AREA":"건물면적","CGG_CD":"자치구코드","RGHT_SE":"권리구분","SNO":"부번","FLR":"층","CGG_NM":"자치구명","BLDG_USG":"건물용도","ARCH_YR":"건축년도","DCLR_SE":"신고구분"}
+
+    # # 'DATA' 부분을 DataFrame으로 변환
+    # df.rename(columns=column_mapping, inplace=True)
+    # context['ti'].xcom_push(key='raw_df', value=df.to_json())
+    step = 1000  # API 최대 반환 건수 권장 단위
+    today = datetime.today()
+    year = today.strftime("%Y")
+
+    all_rows = []
+
+    for month in range(1, 13):
+        deal_ymd = f"{year}{str(month).zfill(2)}"
+        for start in range(1, 10001, step):  # 최대 10,000건까지 페이징
+            end = start + step - 1
+            url = f"{base_url}/{api_key}/json/{service_name}/{start}/{end}/"
+            params = {"DEAL_YMD": deal_ymd}
+            response = requests.get(url, params=params)
+            if response.status_code != 200:
+                print(f"[{deal_ymd}] 요청 실패: {response.status_code}")
+                break
+            data = response.json()
+            items = data.get(service_name, {}).get("row", [])
+            if not items:
+                break  # 더 이상 없음
+            all_rows.extend(items)
+
+    if not all_rows:
+        print("❌ 수집된 데이터가 없습니다.")
+        return
+
+    df = pd.DataFrame(all_rows)
+
+    column_mapping = {
+        "RTRCN_DAY": "취소일", "LAND_AREA": "토지면적", "STDG_CD": "법정동코드",
+        "BLDG_NM": "건물명", "STDG_NM": "법정동명", "MNO": "본번",
+        "THING_AMT": "물건금액", "LOTNO_SE_NM": "지번구분명", "LOTNO_SE": "지번구분",
+        "CTRT_DAY": "계약일", "RCPT_YR": "접수연도", "OPBIZ_RESTAGNT_SGG_NM": "신고한 개업공인중개사 시군구명",
+        "ARCH_AREA": "건물면적", "CGG_CD": "자치구코드", "RGHT_SE": "권리구분",
+        "SNO": "부번", "FLR": "층", "CGG_NM": "자치구명",
+        "BLDG_USG": "건물용도", "ARCH_YR": "건축년도", "DCLR_SE": "신고구분"
+    }
+    df.rename(columns=column_mapping, inplace=True)
+
+    # XCom으로 전달
+    context['ti'].xcom_push(key='raw_df', value=df.to_json())
+    print(f"[✅ 수집 완료] 총 수집 행 수: {len(df)}")
+
+def validate_data():
+    # df 불러와 유효성 검사
+    ...
+
+def insert_data(**context):
+    ti = context["ti"]
+    raw_json = ti.xcom_pull(task_ids='fetch_raw_data', key='raw_df')
+    df = pd.read_json(raw_json)
+
+    # 전처리
+    # 빈 문자열, 공백, 'null' 문자열을 None으로 변환
+    df = df.drop(columns=["자치구명"], errors="ignore")
+    df = df.drop(columns=["법정동명"], errors="ignore")
+    for col in ["계약일", "취소일"]:
+        df[col] = df[col].replace(['', ' ', 'null', 'N/A'], None)
+        df[col] = df[col].apply(lambda x: pd.to_datetime(x, format='%Y%m%d', errors='coerce') if x is not None else None)
+        df[col] = df[col].apply(lambda x: None if pd.isna(x) else x)
+
+    # 전역 None/결측 처리
+    df = df.replace([pd.NaT,'', ' ', 'null', 'N/A'], None)
+
+    print(df.head(10))
+
+    # DB 접속 정보
+
+    url = make_url(db_url)
+    conn = psycopg2.connect(
+        dbname=url.database,
+        user=url.username,
+        password=url.password,
+        host=url.host,
+        port=url.port
+    )
+
+    bulk_insert_data(df, "public.real_estate_transaction", conn, chunk_size=100)
+
+def prune_old_data():
+    engine = create_engine(db_url)
+
+    cutoff = (datetime.today() - timedelta(days=3)).strftime("%Y%m%d")
+
+    with engine.connect() as conn:
+        conn.execute(text("""
+            DELETE FROM public.ESTATE_DATA
+            WHERE "계약일" < :cutoff
+        """), {"cutoff": cutoff})
+
+def t5_check_table():
+    engine = create_engine(db_url)
+
+    with engine.connect() as conn:
+        df = pd.read_sql("SELECT * FROM public.ESTATE_DATA", conn)
+        print(df.to_string(index=False))
+        
+def bulk_insert_data(df, table_name, conn, chunk_size=100):
+    cur = conn.cursor()
+
+    columns = [
+        "district_code", "legal_dong_code", "contract_date", "cancellation_date", "lot_type", "lot_type_name",
+        "main_lot_number", "sub_lot_number", "building_name", "floor", "building_area", "land_area",
+        "transaction_amount", "building_usage", "construction_year", "report_type", "ownership_type",
+        "report_year", "agent_office_district_name"
+    ]
+    quoted_columns = [f'"{col}"' for col in columns]
+
+    insert_prefix = f"INSERT INTO {table_name} ({', '.join(quoted_columns)}) VALUES "
+
+    success_count = 0
+    fail_count = 0
+    buffer = []
+
+    for idx, row in df.iterrows():
+        values = []
+        for col in columns:
+            val = row.get(col, None)
+            if pd.isna(val):
+                values.append('NULL')
+            elif isinstance(val, str):
+                val = val.replace("'", "''")
+                values.append(f"'{val}'")
+            elif isinstance(val, pd.Timestamp):
+                values.append(f"'{val.strftime('%Y-%m-%d %H:%M:%S')}'")
+            elif val is None:
+                values.append('NULL')
+            else:
+                values.append(str(val))
+
+        buffer.append(f"({', '.join(values)})")
+
+        # chunk_size마다 insert
+        if (idx + 1) % chunk_size == 0:
+            try:
+                sql = insert_prefix + ",\n".join(buffer) + ";"
+                cur.execute(sql)
+                conn.commit()
+                print(f"[✅ {idx+1}개] 삽입 성공")
+                success_count += len(buffer)
+            except Exception as e:
+                conn.rollback()
+                print(f"[❌ {idx+1}개] 삽입 실패: {e}")
+                fail_count += len(buffer)
+            buffer = []
+        # print(sql)
+    # 남은 row 처리
+    if buffer:
+        try:
+            sql = insert_prefix + ",\n".join(buffer) + ";"            
+            cur.execute(sql)
+            conn.commit()
+            print(f"[✅ 남은 {len(buffer)}개] 삽입 성공")
+            success_count += len(buffer)
+        except Exception as e:
+            conn.rollback()
+            print(f"[❌ 남은 {len(buffer)}개] 삽입 실패: {e}")
+            fail_count += len(buffer)
+
+    cur.close()
+    conn.close()
+
+    print(f"총 성공: {success_count} / 실패: {fail_count}")

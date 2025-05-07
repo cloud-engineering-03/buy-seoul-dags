@@ -14,7 +14,7 @@ def insert_init_data():
         conn.execute(text("""
             -- 의존성이 있는 하위 테이블부터 삭제
             DROP TABLE IF EXISTS station_connection;
-            DROP TABLE IF EXISTS station_line_map;
+            DROP TABLE IF EXISTS station_line;
             DROP TABLE IF EXISTS real_estate_transaction;
             DROP TABLE IF EXISTS nearby_district;
             DROP TABLE IF EXISTS station;
@@ -49,7 +49,7 @@ def insert_init_data():
             );
 
             -- 지하철역 ↔ 노선 매핑
-            CREATE TABLE station_line_map (
+            CREATE TABLE station_line (
             station_id INTEGER NOT NULL,
             line_number VARCHAR(10) NOT NULL,
             PRIMARY KEY (station_id, line_number),
@@ -160,7 +160,7 @@ def insert_init_data():
         # for _, row in subway_line_df.iterrows():
             
         #     conn.execute(
-        #         text("INSERT INTO STATION_LINE_MAP (station_id, line_number) VALUES (:station_name, :line_num)"),
+        #         text("INSERT INTO STATION_LINE (station_id, line_number) VALUES (:station_name, :line_num)"),
         #         {"station_name": row["STATION_NM"], "line_num": row["LINE_NUM"]}
         #     )
 
