@@ -32,9 +32,11 @@ def insert_init_data():
         conn.execute(text("""
             DROP TABLE IF EXISTS public.NEARBY_DISTRICT CASCADE;
             CREATE TABLE public.NEARBY_DISTRICT (
+                base_district_code CHAR(5),
+                adjacent_district_code CHAR(5),
+                distance DOUBLE PRECISION,
                 FOREIGN KEY (base_district_code) REFERENCES DISTRICT(district_code),
                 FOREIGN KEY (adjacent_district_code) REFERENCES DISTRICT(district_code),
-                distance DOUBLE PRECISION,
                 PRIMARY KEY (base_district_code, adjacent_district_code)
             );
         """))
@@ -43,6 +45,7 @@ def insert_init_data():
             DROP TABLE IF EXISTS public.STATION CASCADE;
             CREATE TABLE public.STATION (
                 station_id int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+                district_code CHAR(5),
                 station_name VARCHAR(50),
                 station_name_eng VARCHAR(50),
                 latitude DOUBLE PRECISION,
