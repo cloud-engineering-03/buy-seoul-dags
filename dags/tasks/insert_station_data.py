@@ -1,7 +1,7 @@
 import pandas as pd
 import re
 import os
-from insert_district_data import load_district_codes
+from .insert_district_data import load_district_codes
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
