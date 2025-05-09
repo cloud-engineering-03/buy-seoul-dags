@@ -3,7 +3,8 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
 from tasks.init_tables import init_tables
-from tasks.insert_district_data import merge_all_data
+from tasks.insert_district_data import insert_district_data
+from tasks.insert_station_data import insert_station_data
 
 with DAG(
     dag_id="init_tables",
@@ -11,12 +12,19 @@ with DAG(
     schedule_interval=None,
     catchup=False
 ) as dag:
-    insert_task = PythonOperator(
+    init_task = PythonOperator(
         task_id="init_tables",
         python_callable=init_tables
     )
-    merge_task = PythonOperator(
-        task_id='merge_station_data',
-        python_callable=merge_all_data,
+
+    insert_district_task = PythonOperator(
+        task_id="insert_district_data",
+        python_callable=insert_district_data
     )
-    insert_task >> merge_task
+
+    insert_station_task = PythonOperator(
+        task_id="insert_station_data",
+        python_callable=insert_station_data
+    )
+
+    init_task >> insert_district_task >> insert_station_task

@@ -114,3 +114,5 @@ def init_tables():
                 ON DELETE CASCADE ON UPDATE CASCADE
             );
         """))
+        conn.commit()
+        conn.close()
