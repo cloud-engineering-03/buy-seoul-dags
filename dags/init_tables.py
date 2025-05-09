@@ -19,3 +19,4 @@ with DAG(
         task_id='merge_station_data',
         python_callable=merge_all_data,
     )
+    insert_task >> merge_task
