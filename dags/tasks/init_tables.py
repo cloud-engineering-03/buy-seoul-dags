@@ -10,8 +10,8 @@ def init_tables():
         conn.execute(text("""
             -- 의존성이 있는 하위 테이블부터 삭제
             DROP TABLE IF EXISTS station_connection;
-            DROP TABLE IF EXISTS station_line;
             DROP TABLE IF EXISTS station_line_map;
+            DROP TABLE IF EXISTS station_line;
             DROP TABLE IF EXISTS station;
             DROP TABLE IF EXISTS real_estate_transaction;
             DROP TABLE IF EXISTS nearby_district;
