@@ -11,9 +11,10 @@ def init_tables():
             -- 의존성이 있는 하위 테이블부터 삭제
             DROP TABLE IF EXISTS station_connection;
             DROP TABLE IF EXISTS station_line;
+            DROP TABLE IF EXISTS station_line_map;
+            DROP TABLE IF EXISTS station;
             DROP TABLE IF EXISTS real_estate_transaction;
             DROP TABLE IF EXISTS nearby_district;
-            DROP TABLE IF EXISTS station;
             DROP TABLE IF EXISTS district;
             DROP TABLE IF EXISTS province;
 
@@ -47,7 +48,7 @@ def init_tables():
             -- 지하철 노선 정보
             CREATE TABLE station_line (
                 line_id INTEGER PRIMARY KEY,
-                line_name VARCHAR(50) NOT NULL,
+                line_name VARCHAR(50) NOT NULL
             );
             
             -- 지하철역 ↔ 노선 매핑
@@ -56,7 +57,7 @@ def init_tables():
             line_id INTEGER NOT NULL,
             PRIMARY KEY (station_id, line_id),
             FOREIGN KEY (station_id) REFERENCES station(station_id)
-                ON DELETE CASCADE ON UPDATE CASCADE
+                ON DELETE CASCADE ON UPDATE cascade,
             FOREIGN KEY (line_id) REFERENCES station_line(line_id)
                 ON DELETE CASCADE ON UPDATE CASCADE
             );
