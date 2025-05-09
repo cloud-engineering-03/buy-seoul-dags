@@ -1,14 +1,10 @@
 from sqlalchemy import create_engine, text
-import pandas as pd
-import os
 
-def insert_init_data():
-    # DB 연결 설정
+
+def init_tables():
     db_url = "postgresql+psycopg2://test:test@postgres-postgresql.postgres.svc.cluster.local:5432/testdb"
     engine = create_engine(db_url)
 
-    # 1. CREATE TABLE 쿼리 실행
-        
     with engine.begin() as conn:
 
         conn.execute(text("""
@@ -48,12 +44,20 @@ def insert_init_data():
                 ON DELETE CASCADE ON UPDATE CASCADE
             );
 
-            -- 지하철역 ↔ 노선 매핑
+            -- 지하철 노선 정보
             CREATE TABLE station_line (
+                line_id INTEGER PRIMARY KEY,
+                line_name VARCHAR(50) NOT NULL,
+            );
+            
+            -- 지하철역 ↔ 노선 매핑
+            CREATE TABLE station_line_map (
             station_id INTEGER NOT NULL,
-            line_number VARCHAR(10) NOT NULL,
-            PRIMARY KEY (station_id, line_number),
+            line_id INTEGER NOT NULL,
+            PRIMARY KEY (station_id, line_id),
             FOREIGN KEY (station_id) REFERENCES station(station_id)
+                ON DELETE CASCADE ON UPDATE CASCADE
+            FOREIGN KEY (line_id) REFERENCES station_line(line_id)
                 ON DELETE CASCADE ON UPDATE CASCADE
             );
 
@@ -109,58 +113,3 @@ def insert_init_data():
                 ON DELETE CASCADE ON UPDATE CASCADE
             );
         """))
-      
-
-    # 2. JSON 로드 및 INSERT
-    curdir = os.path.dirname(os.path.abspath(__file__))
-    # current_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # gu_df = pd.read_json(curdir"/자치구코드_군구명_매핑.json")
-    gu_df = pd.read_json(os.path.join(curdir,"자치구코드_군구명_매핑_서울경기인천.json"))
-
-    sido_df = pd.read_json(os.path.join(curdir,"sido_code.json"))
-    dist_df = pd.read_json(os.path.join(curdir,"인접자치구_거리.json"))
-    dist_df["기준자치구코드"] = dist_df["기준자치구코드"].astype(str).str.zfill(5)
-    dist_df["인접자치구코드"] = dist_df["인접자치구코드"].astype(str).str.zfill(5)
-    cgg_station_map_df = pd.read_csv(os.path.join(curdir,"서울지하철_역위치_영문명_자치구매핑완료.csv"))
-    subway_line_df = pd.read_csv(os.path.join(curdir,"서울지하철_역호선_매핑테이블.csv"))
-
-    
-    with engine.begin() as conn:
-        
-        for _, row in sido_df.iterrows():
-            # row["시도코드"] = str(int(row["시도코드"])).zfill(2)
-            conn.execute(
-                text("INSERT INTO PROVINCE (province_code, province_name) VALUES (:code, :name)"),
-                {"code": row["시도코드"], "name": row["시도명"]}
-            )
-
-
-        for _, row in gu_df.iterrows():
-            
-            conn.execute(
-                text("INSERT INTO DISTRICT (district_code, district_name,province_code) VALUES (:code, :name, :province_code)"),
-                {"code": row["자치구코드"], "name": row["군구명"], "province_code": str(row["자치구코드"])[:2]}, 
-            )
-
-        print(len(dist_df))
-        for _, row in dist_df.iterrows():
-            conn.execute(
-                text("INSERT INTO NEARBY_DISTRICT (base_district_code, adjacent_district_code, distance) VALUES (:from_, :to_, :dist)"),
-                {"from_": row["기준자치구코드"], "to_": row["인접자치구코드"], "dist": row["거리_km"]}
-            )
-
-        
-        for _, row in cgg_station_map_df.iterrows():
-            conn.execute(
-                text("INSERT INTO STATION (station_name, latitude, longitude, district_code, station_name_eng) VALUES (:station_name,:lat, :lon, :cgg_code, :eng_name)"),
-                {"station_name": row["STATION_NM"], "cgg_code": row["자치구코드"],"lat": row["위도"], "lon": row["경도"],"eng_name": row["STATION_NM_ENG"]}
-            )
-        
-        # for _, row in subway_line_df.iterrows():
-            
-        #     conn.execute(
-        #         text("INSERT INTO STATION_LINE (station_id, line_number) VALUES (:station_name, :line_num)"),
-        #         {"station_name": row["STATION_NM"], "line_num": row["LINE_NUM"]}
-        #     )
-
