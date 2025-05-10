@@ -55,7 +55,10 @@ def merge_all_data():
                          df3, "inner", "district_name")
 
     merged_df = merged_df.drop_duplicates(['station_id'], ignore_index=True)
-    print(merged_df.head())
+    first_ids = merged_df.groupby('station_name')[
+        'station_id'].transform('first')
+    merged_df['station_id'] = first_ids
+
     return merged_df
 
 
@@ -74,12 +77,10 @@ def insert_station_data():
         5: '5호선', 6: '6호선', 7: '7호선', 8: '8호선'
     }
 
-    merged_df = merge_all_data()
     # station_line 테이블 데이터 생성
-    station_line_df = merged_df[['line_id']].drop_duplicates()
-    station_line_df['line_name'] = station_line_df['line_id'].apply(
-        lambda x: line_dict[x]
-    )
+    station_line_df = pd.DataFrame(list(line_dict.items()), columns=[
+                                   'line_id', 'line_name'])
+    merged_df = merge_all_data()
 
     with engine.begin() as conn:
         # station 테이블 insert
