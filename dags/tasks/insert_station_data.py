@@ -108,5 +108,3 @@ def insert_station_data():
                 line_id=row['line_id']
             ).on_conflict_do_nothing()
             conn.execute(stmt)
-        conn.commit()
-        conn.close()

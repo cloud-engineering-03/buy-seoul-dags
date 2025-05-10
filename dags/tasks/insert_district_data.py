@@ -50,7 +50,4 @@ def insert_district_data():
             ).on_conflict_do_nothing()
             conn.execute(stmt)
 
-        conn.commit()
-        conn.close()
-
     return df
