@@ -78,7 +78,8 @@ def insert_station_data():
     # station_line 테이블 데이터 생성
     station_line_df = merged_df[['line_id']].drop_duplicates()
     station_line_df['line_name'] = station_line_df['line_id'].apply(
-        lambda x: {line_dict[x]})
+        lambda x: line_dict[x]
+    )
 
     with engine.begin() as conn:
         # station 테이블 insert
