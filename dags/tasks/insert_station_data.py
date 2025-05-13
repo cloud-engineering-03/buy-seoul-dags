@@ -129,6 +129,8 @@ def insert_station_data():
     connection_df = load_connection_df()
     transfer_df = load_transfer_df()
 
+    merged_df = merged_df.where(pd.notnull(merged_df), None)
+
     name_to_id = dict(merged_df[['station_name', 'station_id']].values)
 
     with engine.begin() as conn:
