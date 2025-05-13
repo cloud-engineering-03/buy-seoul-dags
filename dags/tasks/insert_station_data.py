@@ -156,11 +156,12 @@ def insert_station_data():
 
         # station_line_map 테이블 insert
         for _, row in merged_df.iterrows():
-            stmt = pg_insert(station_line_map).values(
-                station_id=row['station_id'],
-                line_id=row['line_id']
-            ).on_conflict_do_nothing()
-            conn.execute(stmt)
+            if row['station_id'] is not None and row['line_id'] is not None:
+                stmt = pg_insert(station_line_map).values(
+                    station_id=row['station_id'],
+                    line_id=row['line_id']
+                ).on_conflict_do_nothing()
+                conn.execute(stmt)
 
         # station_connection 테이블 insert
         for i in range(len(connection_df) - 1):
