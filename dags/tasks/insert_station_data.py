@@ -8,13 +8,34 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 curdir = os.path.dirname(os.path.abspath(__file__))
 
 
+def handle_seoul_special_characters(station_name):
+    special_characters = {
+        '신내역': '신내',
+        '당고개': '불암산'
+    }
+    return special_characters.get(station_name, station_name)
+
+
+def get_line_id(line_name):
+    line_dict = {
+        '01호선': 1,
+        '02호선': 2,
+        '03호선': 3,
+        '04호선': 4,
+        '05호선': 5,
+        '06호선': 6,
+        '07호선': 7,
+        '08호선': 8
+    }
+    return line_dict.get(line_name, None)
+
+
 def load_station_coordinates():
     path = os.path.join(
         curdir, '../resources/서울교통공사_1_8호선 역사 좌표(위경도) 정보_20241031.csv')
     df = pd.read_csv(path, encoding='cp949')
-    df = df[['연번', '호선', '역명', '위도', '경도']]
-    df.columns = ['station_id', 'line_id',
-                  'station_name', 'latitude', 'longitude']
+    df = df[['역명', '위도', '경도']]
+    df.columns = ['station_name', 'latitude', 'longitude']
     return df
 
 
@@ -28,8 +49,9 @@ def load_district_station_map():
         stations = row['해당역(호선)']
         matches = re.findall(r'([^(),]+)\(\d+[^)]*\)', stations)
         for station in matches:
+            station = station.strip()
             expanded_rows.append({
-                'station_name': station.strip(),
+                'station_name': station,
                 'district_name': district
             })
 
@@ -38,21 +60,24 @@ def load_district_station_map():
 
 def load_station_eng_names():
     path = os.path.join(curdir, '../resources/서울교통공사_노선별 지하철역 정보.csv')
-    df2 = pd.read_csv(path, encoding='cp949')
-    df2 = df2[['전철역명', '전철명명(영문)']]
-    df2.columns = ['station_name', 'station_name_eng']
-    return df2
+    df = pd.read_csv(path, encoding='cp949')
+    df = df[['전철역코드', '전철역명', '전철명명(영문)', '호선']]
+    df.columns = ['station_id', 'station_name',
+                  'station_name_eng', 'line_name']
+
+    df['line_id'] = df['line_name'].apply(get_line_id)
+    return df
 
 
 def merge_all_data():
-    df = load_station_coordinates()
-    df2 = load_station_eng_names()
-    expanded_df = load_district_station_map()
-    df3 = load_district_codes()
+    df0 = load_station_eng_names()
+    df1 = load_district_station_map()
+    df2 = load_district_codes()
+    df3 = load_station_coordinates()
 
-    merged_df = pd.merge(pd.merge(pd.merge(df, df2, "inner", "station_name"),
-                                  expanded_df, "inner", "station_name"),
-                         df3, "inner", "district_name")
+    merged_df = pd.merge(df0, df1, on='station_name', how='left')
+    merged_df = pd.merge(merged_df, df2, on='district_name', how='left')
+    merged_df = pd.merge(merged_df, df3, on='station_name', how='left')
 
     merged_df = merged_df.drop_duplicates(['station_id'], ignore_index=True)
     first_ids = merged_df.groupby('station_name')[
@@ -60,6 +85,25 @@ def merge_all_data():
     merged_df['station_id'] = first_ids
 
     return merged_df
+
+
+def load_connection_df():
+    path = os.path.join(
+        curdir, '../resources/서울교통공사 역간거리 및 소요시간_240810.csv')
+    df = pd.read_csv(path, encoding='cp949')
+    df.columns = ['index', 'line_number', 'station_name',
+                  'time', 'distance_km', 'distance_nu']
+    return df
+
+
+def load_transfer_df():
+    path = os.path.join(
+        curdir, '../resources/서울교통공사_환승역거리 소요시간 정보_20250310.csv')
+    df = pd.read_csv(path, encoding='cp949')
+    df.columns = ['index', 'line_number', 'from_station',
+                  'to_line_number', 'time_seconds', 'time_str']
+    df['line_number'] = df['line_number'].astype(str)
+    return df
 
 
 def insert_station_data():
@@ -71,6 +115,7 @@ def insert_station_data():
     station = metadata.tables['station']
     station_line = metadata.tables['station_line']
     station_line_map = metadata.tables['station_line_map']
+    station_connection = metadata.tables['station_connection']
 
     line_dict = {
         1: '1호선', 2: '2호선', 3: '3호선', 4: '4호선',
@@ -81,6 +126,10 @@ def insert_station_data():
     station_line_df = pd.DataFrame(list(line_dict.items()), columns=[
                                    'line_id', 'line_name'])
     merged_df = merge_all_data()
+    connection_df = load_connection_df()
+    transfer_df = load_transfer_df()
+
+    name_to_id = dict(merged_df[['station_name', 'station_id']].values)
 
     with engine.begin() as conn:
         # station 테이블 insert
@@ -108,5 +157,40 @@ def insert_station_data():
             stmt = pg_insert(station_line_map).values(
                 station_id=row['station_id'],
                 line_id=row['line_id']
+            ).on_conflict_do_nothing()
+            conn.execute(stmt)
+
+        # station_connection 테이블 insert
+        for i in range(len(connection_df) - 1):
+            row1 = connection_df.iloc[i]
+            row2 = connection_df.iloc[i + 1]
+
+            from_id = name_to_id.get(
+                handle_seoul_special_characters(row1['station_name'].strip()))
+            to_id = name_to_id.get(handle_seoul_special_characters(
+                row2['station_name'].strip()))
+            if from_id is None or to_id is None:
+                continue
+            stmt = pg_insert(station_connection).values(
+                from_station_id=from_id,
+                to_station_id=to_id,
+                time_minutes=int(row2['time']) if pd.notnull(
+                    row2['time']) else None,
+                transfer=False,
+                line_number=str(row1['line_number'])
+            ).on_conflict_do_nothing()
+            conn.execute(stmt)
+
+        for _, row in transfer_df.iterrows():
+            from_id = name_to_id.get(row['from_station'])
+            to_id = name_to_id.get(row['from_station'])
+            if from_id is None or to_id is None:
+                continue
+            stmt = pg_insert(station_connection).values(
+                from_station_id=from_id,
+                to_station_id=to_id,
+                time_minutes=int(row['time_seconds']) // 60,
+                transfer=True,
+                line_number=row['line_number']
             ).on_conflict_do_nothing()
             conn.execute(stmt)
