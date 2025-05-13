@@ -156,7 +156,7 @@ def insert_station_data():
 
         # station_line_map 테이블 insert
         for _, row in merged_df.iterrows():
-            if row['station_id'] is not None and row['line_id'] is not None:
+            if pd.notnull(row['station_id']) and pd.notnull(row['line_id']):
                 stmt = pg_insert(station_line_map).values(
                     station_id=row['station_id'],
                     line_id=row['line_id']
