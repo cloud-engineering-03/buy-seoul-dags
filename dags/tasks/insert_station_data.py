@@ -69,24 +69,6 @@ def load_station_eng_names():
     return df
 
 
-def merge_all_data():
-    df0 = load_station_eng_names()
-    df1 = load_district_station_map()
-    df2 = load_district_codes()
-    df3 = load_station_coordinates()
-
-    merged_df = pd.merge(df0, df1, on='station_name', how='left')
-    merged_df = pd.merge(merged_df, df2, on='district_name', how='left')
-    merged_df = pd.merge(merged_df, df3, on='station_name', how='left')
-
-    merged_df = merged_df.drop_duplicates(['station_id'], ignore_index=True)
-    first_ids = merged_df.groupby('station_name')[
-        'station_id'].transform('first')
-    merged_df['station_id'] = first_ids
-
-    return merged_df
-
-
 def load_connection_df():
     path = os.path.join(
         curdir, '../resources/서울교통공사 역간거리 및 소요시간_240810.csv')
@@ -104,6 +86,24 @@ def load_transfer_df():
                   'to_line_number', 'time_seconds', 'time_str']
     df['line_number'] = df['line_number'].astype(str)
     return df
+
+
+def merge_all_data():
+    df0 = load_station_eng_names()
+    df1 = load_district_station_map()
+    df2 = load_district_codes()
+    df3 = load_station_coordinates()
+
+    merged_df = pd.merge(df0, df1, on='station_name', how='left')
+    merged_df = pd.merge(merged_df, df2, on='district_name', how='left')
+    merged_df = pd.merge(merged_df, df3, on='station_name', how='left')
+
+    merged_df = merged_df.drop_duplicates(['station_id'], ignore_index=True)
+    first_ids = merged_df.groupby('station_name')[
+        'station_id'].transform('first')
+    merged_df['station_id'] = first_ids
+
+    return merged_df
 
 
 def insert_station_data():
@@ -172,7 +172,7 @@ def insert_station_data():
                 handle_seoul_special_characters(row1['station_name'].strip()))
             to_id = name_to_id.get(handle_seoul_special_characters(
                 row2['station_name'].strip()))
-            if from_id is None or to_id is None:
+            if pd.notnull(from_id) and pd.notnull(to_id):
                 continue
             stmt = pg_insert(station_connection).values(
                 from_station_id=from_id,
