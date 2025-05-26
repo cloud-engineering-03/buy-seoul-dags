@@ -70,7 +70,7 @@ def load_station_eng_names():
 
 # Added by BlakeCho 20250526, 역간 연결정보 테스트 업로드용
 def load_station_connection():
-    path = os.path.join(curdir, '../resources/df_station_connection20250526.csv')
+    path = os.path.join(curdir, '../resources/df_station_connection_20250526.csv')
     df = pd.read_csv(path, encoding='cp949')
     df = df[['from_station_id','to_station_id','time_minutes']]
     df.columns = ['from_station_id', 'to_station_id',
