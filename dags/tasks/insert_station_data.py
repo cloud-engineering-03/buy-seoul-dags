@@ -68,6 +68,15 @@ def load_station_eng_names():
     df['line_id'] = df['line_name'].apply(get_line_id)
     return df
 
+# Added by BlakeCho 20250526, 역간 연결정보 테스트 업로드용
+def load_station_connection():
+    path = os.path.join(curdir, '../resources/df_station_connection20250526.csv')
+    df = pd.read_csv(path, encoding='cp949')
+    df = df[['from_station_id','to_station_id','time_minutes']]
+    df.columns = ['from_station_id', 'to_station_id',
+                  'time_minutes']
+    return df
+
 
 def load_connection_df():
     path = os.path.join(
@@ -128,6 +137,8 @@ def insert_station_data():
     merged_df = merge_all_data()
     connection_df = load_connection_df()
     transfer_df = load_transfer_df()
+    # Added by BlakeCho 20250526, 역간 연결정보 테스트 업로드용
+    station_connection_df = load_station_connection()
 
     merged_df = merged_df.where(pd.notnull(merged_df), None)
 
@@ -181,6 +192,17 @@ def insert_station_data():
                     row2['time']) else None,
                 transfer=False,
                 line_number=str(row1['line_number'])
+            ).on_conflict_do_nothing()
+            conn.execute(stmt)
+        
+        # Added by BlakeCho, 테스트 역간 이동시간 테스트 업로드
+        for _, row in station_connection_df.iterrows():
+            stmt = pg_insert(station_connection).values(
+                from_station_id = row['from_station_id'],
+                to_station_id = row['to_station_id'],
+                time_minutes = row['time_minutes'],
+                transfer = False,
+                line_number = 0
             ).on_conflict_do_nothing()
             conn.execute(stmt)
 
