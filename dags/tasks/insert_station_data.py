@@ -35,7 +35,7 @@ def load_station_coordinates():
         # Added by BlakeCho 20250702
         # 좌표 데이터 소스 변경
         curdir, '../resources/서울지하철_역사_좌표정보_20250702.csv')
-    df = pd.read_csv(path, encoding='cp949')
+    df = pd.read_csv(path, encoding='utf-8')
     df = df[['역명', '위도', '경도']]
     df.columns = ['station_name', 'latitude', 'longitude']
     return df
