@@ -32,7 +32,9 @@ def get_line_id(line_name):
 
 def load_station_coordinates():
     path = os.path.join(
-        curdir, '../resources/서울교통공사_1_8호선 역사 좌표(위경도) 정보_20241031.csv')
+        # Added by BlakeCho 20250702
+        # 좌표 데이터 소스 변경
+        curdir, '../resources/서울지하철_역사_좌표정보_20250702.csv')
     df = pd.read_csv(path, encoding='cp949')
     df = df[['역명', '위도', '경도']]
     df.columns = ['station_name', 'latitude', 'longitude']
@@ -137,7 +139,8 @@ def insert_station_data():
     merged_df = merge_all_data()
     connection_df = load_connection_df()
     transfer_df = load_transfer_df()
-    # Added by BlakeCho 20250526, 역간 연결정보 테스트 업로드용
+    # Added by BlakeCho 2025026
+    # , 역간 연결정보 테스트 업로드용
     station_connection_df = load_station_connection()
 
     merged_df = merged_df.where(pd.notnull(merged_df), None)
