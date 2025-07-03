@@ -225,8 +225,8 @@ def insert_station_data():
 
         for _, row in nearby_district_df.iterrows():
             stmt = pg_insert(nearby_district).values(
-                base_district_code = row['base_district_code'],
-                adjacent_district_code = row['adjacent_district_code'],
+                base_district_code = str(int(row['base_district_code'])).zfill(5),
+                adjacent_district_code = str(int(row['adjacent_district_code'])).zfill(5),
                 distance = row['distance'],
             ).on_conflict_do_nothing()
             conn.execute(stmt)
