@@ -16,31 +16,56 @@ def fetch_raw_data(**context):
     service_name = "tbLnOpendataRtmsV"
     base_url = "http://openapi.seoul.go.kr:8088"
 
-    step = 1000  # API 최대 반환 건수 권장 단위
+    step = 100  # API 최대 반환 건수 권장 단위
     today = datetime.today()
     year = today.strftime("%Y")
+    start_date = datetime(year, 1, 1)
+    end_date = datetime(year, 12, 31)
 
     all_rows = []
 
-    for month in range(1, 13):
-        deal_ymd = f"{year}{str(month).zfill(2)}"
-        for start in range(1, 10000, step):  # 최대 10,000건까지 페이징
+    # for month in range(1, 13):
+    #     deal_ymd = f"{year}{str(month).zfill(2)}"
+    #     for start in range(1, 10000, step):  # 최대 10,000건까지 페이징
+    #         end = start + step - 1
+    #         url = f"{base_url}/{api_key}/json/{service_name}/{start}/{end}/"
+    #         params = {"DEAL_YMD": deal_ymd}
+    #         response = requests.get(url, params=params)
+    #         if response.status_code != 200:
+    #             print(f"[{deal_ymd}] 요청 실패: {response.status_code}")
+    #             break
+    #         data = response.json()
+    #         items = data.get(service_name, {}).get("row", [])
+    #         if not items:
+    #             break  # 더 이상 없음
+    #         all_rows.extend(items)
+
+    # if not all_rows:
+    #     print("❌ 수집된 데이터가 없습니다.")
+    #     return
+    while start_date <= end_date:
+        date_str = start_date.strftime("%Y%m%d")  # CTRT_DAY 형식: YYYYMMDD
+        print(f"📅 요청 날짜: {date_str}")
+
+        for start in range(1, 400, step):
             end = start + step - 1
             url = f"{base_url}/{api_key}/json/{service_name}/{start}/{end}/"
-            params = {"DEAL_YMD": deal_ymd}
+            params = {"CTRT_DAY": date_str}
+
             response = requests.get(url, params=params)
             if response.status_code != 200:
-                print(f"[{deal_ymd}] 요청 실패: {response.status_code}")
+                print(f"❌ [{date_str}] 요청 실패: {response.status_code}")
                 break
+
             data = response.json()
             items = data.get(service_name, {}).get("row", [])
+
             if not items:
-                break  # 더 이상 없음
+                break  # 이 날짜에 더 이상 없음
+
             all_rows.extend(items)
 
-    if not all_rows:
-        print("❌ 수집된 데이터가 없습니다.")
-        return
+        start_date += timedelta(days=1)  # 다음 날로 넘어감
 
     df = pd.DataFrame(all_rows)
 
