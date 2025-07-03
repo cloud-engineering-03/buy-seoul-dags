@@ -40,6 +40,16 @@ def load_station_coordinates():
     df.columns = ['station_name', 'latitude', 'longitude']
     return df
 
+def load_nearby_district():
+    path = os.path.join(
+        # Added by BlakeCho 20250702
+        # 좌표 데이터 소스 변경
+        curdir, '../resources/nearby_district.csv')
+    df = pd.read_csv(path, encoding='utf-8')
+    df = df[['base_district_code', 'adjacent_district_code', 'distance']]
+    # df.columns = ['station_name', 'latitude', 'longitude']
+    return df
+
 
 def load_district_station_map():
     path = os.path.join(curdir, '../resources/서울교통공사_자치구별지하철역정보_20250317.csv')
@@ -105,6 +115,7 @@ def merge_all_data():
     df2 = load_district_codes()
     df3 = load_station_coordinates()
 
+
     merged_df = pd.merge(df0, df1, on='station_name', how='left')
     merged_df = pd.merge(merged_df, df2, on='district_name', how='left')
     merged_df = pd.merge(merged_df, df3, on='station_name', how='left')
@@ -127,6 +138,7 @@ def insert_station_data():
     station_line = metadata.tables['station_line']
     station_line_map = metadata.tables['station_line_map']
     station_connection = metadata.tables['station_connection']
+    nearby_district = metadata.tables['nearby_district']
 
     line_dict = {
         1: '1호선', 2: '2호선', 3: '3호선', 4: '4호선',
@@ -142,6 +154,7 @@ def insert_station_data():
     # Added by BlakeCho 2025026
     # , 역간 연결정보 테스트 업로드용
     station_connection_df = load_station_connection()
+    nearby_district_df = load_nearby_district()
 
     merged_df = merged_df.where(pd.notnull(merged_df), None)
 
@@ -206,6 +219,15 @@ def insert_station_data():
                 time_minutes = row['time_minutes'],
                 transfer = False,
                 line_number = 0
+            ).on_conflict_do_nothing()
+            conn.execute(stmt)
+
+
+        for _, row in nearby_district_df.iterrows():
+            stmt = pg_insert(nearby_district).values(
+                base_district_code = row['base_district_code'],
+                adjacent_district_code = row['adjacent_district_code'],
+                distance = row['distance'],
             ).on_conflict_do_nothing()
             conn.execute(stmt)
 
