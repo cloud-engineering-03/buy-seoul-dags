@@ -24,7 +24,7 @@ def fetch_raw_data(**context):
 
     for month in range(1, 13):
         deal_ymd = f"{year}{str(month).zfill(2)}"
-        for start in range(1, 100000, step):  # 최대 10,000건까지 페이징
+        for start in range(1, 10000, step):  # 최대 10,000건까지 페이징
             end = start + step - 1
             url = f"{base_url}/{api_key}/json/{service_name}/{start}/{end}/"
             params = {"DEAL_YMD": deal_ymd}
