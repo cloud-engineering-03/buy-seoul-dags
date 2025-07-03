@@ -18,7 +18,7 @@ def fetch_raw_data(**context):
 
     step = 100  # API 최대 반환 건수 권장 단위
     today = datetime.today()
-    year = today.strftime("%Y")
+    year = int(today.strftime("%Y"))
     start_date = datetime(year, 1, 1)
     end_date = datetime(year, 12, 31)
 
