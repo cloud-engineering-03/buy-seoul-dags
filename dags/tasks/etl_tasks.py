@@ -47,9 +47,9 @@ def fetch_raw_data(**context):
         date_str = start_date.strftime("%Y%m%d")  # CTRT_DAY 형식: YYYYMMDD
         print(f"📅 요청 날짜: {date_str}")
 
-        for start in range(1, 400, step):
+        for start in range(1, 10, step):
             end = start + step - 1
-            url = f"{base_url}/{api_key}/json/{service_name}/{start}/{end}/"
+            url = f"{base_url}/{api_key}/json/{service_name}/{start}/{end}/%20/%20/%20/%20/%20/%20/%20/%20/%20/{date_str}/%20/"
             params = {"CTRT_DAY": date_str}
 
             response = requests.get(url, params=params)
