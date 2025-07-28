@@ -130,6 +130,7 @@ def merge_all_data():
         right_on='station_name',
         how='left'
     )
+    print(merged)
 
     # 기존 df에서 C가 결측이었던 부분만 C_2 값으로 채움
     merged_df.loc[merged_df['district_code'].isna(), 'district_code'] = merged['district_code'].values
