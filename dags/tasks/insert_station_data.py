@@ -130,11 +130,11 @@ def merge_all_data():
         right_on='station_name',
         how='left'
     )
-    print(merged['station_name','district_code'].head())
+    print(merged[['station_name','district_code']].head())
 
     # 기존 df에서 C가 결측이었던 부분만 C_2 값으로 채움
     merged_df.loc[merged_df['district_code'].isna(), 'district_code'] = merged['district_code'].values
-    print(merged_df['station_name','district_code'].head())
+    print(merged_df[['station_name','district_code']].head())
     merged_df = merged_df.drop_duplicates(['station_id'], ignore_index=True)
     first_ids = merged_df.groupby('station_name')[
         'station_id'].transform('first')
