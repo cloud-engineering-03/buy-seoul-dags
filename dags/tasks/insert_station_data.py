@@ -130,16 +130,17 @@ def merge_all_data():
     merged_df['station_id'] = first_ids
     for idx, row in merged_df.iterrows():
         if pd.isna(row['district_code']):
+            print(f'없는 곳 이름{row['district_name']}')
             name = row['district_name']
-        
+            print(f'검색결과 {df3_name[df3_name['district_name'] == name]}')
             match = df3_name[df3_name['district_name'] == name]
             if not match.empty:
                 merged_df.at[idx, 'district_code'] = match.iloc[0]['district_code']
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
-    print(merged_df)
-    print(df3)
-    print(df3_name)
+    # print(merged_df)
+    # print(df3)
+    # print(df3_name)
 
     return merged_df
 
