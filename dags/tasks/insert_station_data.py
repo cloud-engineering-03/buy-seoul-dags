@@ -115,26 +115,26 @@ def merge_all_data():
     df0 = load_station_eng_names()
     df1 = load_district_station_map()
     df2 = load_district_codes()
-    df3 = load_station_coordinates()
+    df3_name= load_station_coordinates()
+    df3 = df3_name.drop(columns=['district_name'], inplace=True)
 
-    df3 = pd.merge(df3, df2, on='district_name', how='left')
+    df3_name = pd.merge(df3_name, df2, on='district_name', how='left')
     merged_df = pd.merge(df0, df1, on='station_name', how='left')
     merged_df = pd.merge(merged_df, df2, on='district_name', how='left')
     merged_df = pd.merge(merged_df, df3, on='station_name', how='left')
-    lookup = dict(zip(df3['district_name'], df3['district_code']))
+    
 
-    # 반복문으로 보충
-    for idx, row in merged_df.iterrows():
-        if pd.isna(row['district_code']):
-            b_val = row['district_name']
-            if b_val in lookup:
-                merged_df.at[idx, 'district_code'] = lookup[b_val]
-                print(f'value filled{b_val,lookup[b_val]}')
     merged_df = merged_df.drop_duplicates(['station_id'], ignore_index=True)
     first_ids = merged_df.groupby('station_name')[
         'station_id'].transform('first')
     merged_df['station_id'] = first_ids
-
+    for idx, row in merged_df.iterrows():
+        if pd.isna(row['district_code']):
+            name = row['district_name']
+        
+            match = df3_name[df3_name['district_name'] == name]
+            if not match.empty:
+                merged_df.at[idx, 'district_code'] = match.iloc[0]['district_code']
     return merged_df
 
 
