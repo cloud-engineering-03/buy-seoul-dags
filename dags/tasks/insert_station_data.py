@@ -135,6 +135,12 @@ def merge_all_data():
             match = df3_name[df3_name['district_name'] == name]
             if not match.empty:
                 merged_df.at[idx, 'district_code'] = match.iloc[0]['district_code']
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+    print(merged_df)
+    print(df3)
+    print(df3_name)
+
     return merged_df
 
 
