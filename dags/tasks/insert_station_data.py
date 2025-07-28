@@ -121,20 +121,15 @@ def merge_all_data():
     merged_df = pd.merge(df0, df1, on='station_name', how='left')
     merged_df = pd.merge(merged_df, df2, on='district_name', how='left')
     merged_df = pd.merge(merged_df, df3, on='station_name', how='left')
-    df_missing_c = merged_df[merged_df['district_code'].isna()]
+    lookup = dict(zip(df3['district_name'], df3['district_code']))
 
-    # 외부 테이블과 B == B_2 기준으로 left join
-    merged = df_missing_c.merge(
-        df3,
-        left_on='station_name',
-        right_on='station_name',
-        how='left'
-    )
-    print(merged[['station_name','district_code']].head())
-
-    # 기존 df에서 C가 결측이었던 부분만 C_2 값으로 채움
-    merged_df.loc[merged_df['district_code'].isna(), 'district_code'] = merged['district_code'].values
-    print(merged_df[['station_name','district_code']].head())
+    # 반복문으로 보충
+    for idx, row in merged_df.iterrows():
+        if pd.isna(row['district_code']):
+            b_val = row['district_name']
+            if b_val in lookup:
+                merged_df.at[idx, 'district_code'] = lookup[b_val]
+                print(f'value filled{b_val,lookup[b_val]}')
     merged_df = merged_df.drop_duplicates(['station_id'], ignore_index=True)
     first_ids = merged_df.groupby('station_name')[
         'station_id'].transform('first')
