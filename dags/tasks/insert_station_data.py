@@ -117,7 +117,7 @@ def merge_all_data():
     df2 = load_district_codes()
     df3 = load_station_coordinates()
 
-
+    df3 = pd.merge(df3, df2, on='district_name', how='left')
     merged_df = pd.merge(df0, df1, on='station_name', how='left')
     merged_df = pd.merge(merged_df, df2, on='district_name', how='left')
     merged_df = pd.merge(merged_df, df3, on='station_name', how='left')
