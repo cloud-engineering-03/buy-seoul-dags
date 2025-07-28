@@ -25,7 +25,8 @@ def get_line_id(line_name):
         '05호선': 5,
         '06호선': 6,
         '07호선': 7,
-        '08호선': 8
+        '08호선': 8,
+        '09호선': 9
     }
     return line_dict.get(line_name, None)
 
@@ -36,8 +37,9 @@ def load_station_coordinates():
         # 좌표 데이터 소스 변경
         curdir, '../resources/서울지하철_역사_좌표정보_20250702.csv')
     df = pd.read_csv(path, encoding='utf-8')
-    df = df[['역명', '위도', '경도']]
-    df.columns = ['station_name', 'latitude', 'longitude']
+    df['자치구명'] = df['자치구명'].str.split().str[0]
+    df = df[['역명', '위도', '경도', '자치구명']]
+    df.columns = ['station_name', 'latitude', 'longitude', 'district_name']
     return df
 
 def load_nearby_district():
@@ -119,6 +121,18 @@ def merge_all_data():
     merged_df = pd.merge(df0, df1, on='station_name', how='left')
     merged_df = pd.merge(merged_df, df2, on='district_name', how='left')
     merged_df = pd.merge(merged_df, df3, on='station_name', how='left')
+    df_missing_c = merged_df[merged_df['district_code'].isna()]
+
+    # 외부 테이블과 B == B_2 기준으로 left join
+    merged = df_missing_c.merge(
+        df3,
+        left_on='station_name',
+        right_on='station_name',
+        how='left'
+    )
+
+    # 기존 df에서 C가 결측이었던 부분만 C_2 값으로 채움
+    merged_df.loc[merged_df['district_code'].isna(), 'district_code'] = merged['district_code'].values
 
     merged_df = merged_df.drop_duplicates(['station_id'], ignore_index=True)
     first_ids = merged_df.groupby('station_name')[
@@ -142,7 +156,7 @@ def insert_station_data():
 
     line_dict = {
         1: '1호선', 2: '2호선', 3: '3호선', 4: '4호선',
-        5: '5호선', 6: '6호선', 7: '7호선', 8: '8호선'
+        5: '5호선', 6: '6호선', 7: '7호선', 8: '8호선', 9: '9호선'
     }
 
     # station_line 테이블 데이터 생성

@@ -50,7 +50,7 @@ def fetch_raw_data(**context):
         for start in range(1, 400, step):
             end = start + step - 1
             url = f"{base_url}/{api_key}/json/{service_name}/{start}/{end}/%20/%20/%20/%20/%20/%20/%20/%20/%20/{date_str}/%20/"
-            params = {"CTRT_DAY": date_str}
+            # params = {"CTRT_DAY": date_str}
 
             response = requests.get(url, params=params)
             if response.status_code != 200:
